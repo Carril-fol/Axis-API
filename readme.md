@@ -102,7 +102,6 @@ All endpoints are prefixed with their module version path. JWT is sent via HTTP-
 | Categories | `/categories/api/v1` |
 | Products | `/products/api/v1` |
 | Stock | `/stock/api/v1` |
-| Suppliers | `/suppliers/api/v1` |
 
 Interactive API docs available at `/apidoc/swagger` once the server is running.
 
