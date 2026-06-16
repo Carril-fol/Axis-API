@@ -1,6 +1,6 @@
 # Stock Management API
 
-A multi-tenant REST API for stock and inventory management. Each company manages its own products, categories, suppliers, stock, and users through a role-based access control system.
+A multi-tenant REST API for stock and inventory management. Each company manages its own products, categories, stock, and users through a role-based access control system.
 
 ## Why this project
 
