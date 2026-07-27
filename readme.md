@@ -4,7 +4,7 @@ A multi-tenant REST API for stock and inventory management. Each company manages
 
 ## Tech Stack
 
-Python 3.13 with Flask. SQLAlchemy and Alembic for data handling and migrations. PostgreSQL (Neon serverless) as the database. Authentication with Flask-JWT-Extended using cookies. Request and response validation with Pydantic v2. Automatic documentation with Spectree. Password hashing with Argon2. Testing with Pytest on an in-memory SQLite database.
+Python 3.13 with Flask. SQLAlchemy and Alembic for data handling and migrations. PostgreSQL (Neon serverless) as the database. Authentication with Flask-JWT-Extended using cookies. Request and response validation with Pydantic v2. Automatic documentation with Spectree. Password hashing with Argon2. Testing with Pytest.
 
 ## Project structure
 
