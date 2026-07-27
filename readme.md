@@ -1,26 +1,12 @@
 # Stock Management API
 
-A multi-tenant REST API for stock and inventory management. Each company manages its own products, categories, stock, and users through a role-based access control system.
-
-## Why this project
-
-Built as a portfolio project to practice designing a production-grade 
-multi-tenant REST API from scratch. The goal was to implement patterns 
-I'd use in a real backend: RBAC, tenant isolation, JWT with cookies, 
-database migrations, and automated API docs — all in a single cohesive system.
+A multi-tenant REST API for stock and inventory management. Each company manages its own products, categories, stock, and users through a role-based access control system (RBAC).
 
 ## Tech Stack
 
-- **Python 3.13** + **Flask**
-- **SQLAlchemy** + **Alembic** (migrations)
-- **PostgreSQL** (Neon serverless)
-- **Flask-JWT-Extended** (authentication via cookies)
-- **Pydantic v2** (request/response validation)
-- **Spectree** (OpenAPI docs)
-- **Argon2** (password hashing)
-- **Pytest** (testing with SQLite in-memory)
+Python 3.13 with Flask. SQLAlchemy and Alembic for data handling and migrations. PostgreSQL (Neon serverless) as the database. Authentication with Flask-JWT-Extended using cookies. Request and response validation with Pydantic v2. Automatic documentation with Spectree. Password hashing with Argon2. Testing with Pytest on an in-memory SQLite database.
 
-## Project Structure
+## Project structure
 
 ```
 src/
@@ -40,16 +26,11 @@ src/
 tests/                      # Pytest test suite
 ```
 
-Each module follows the same structure: `entity`, `repository`, `service`, `model`, `controller`, `exceptions`, and optionally `middleware`.
+Each module follows the same structure: entity, repository, service, model, controller, exceptions, and optionally middleware.
 
 ## Setup
 
-### Requirements
-
-- Python 3.13+
-- PostgreSQL database (or Neon connection string)
-
-### Installation
+You need Python 3.13 or higher and a PostgreSQL database (or a Neon connection string).
 
 ```bash
 git clone https://github.com/Carril-fol/stocky-api-rest.git
@@ -59,8 +40,6 @@ python -m venv .venv
 source .venv/bin/activate   # Linux/Mac
 pip install -r requirements.txt
 ```
-
-### Environment variables
 
 Copy `.env.example` to `.env` and fill in the values:
 
@@ -77,58 +56,42 @@ SERVER_HOST=0.0.0.0
 SERVER_PORT=8000
 ```
 
-### Run
+To run the server:
 
 ```bash
 cd src
 python app.py
 ```
 
-On startup the server will:
-1. Create all database tables
-2. Seed all permissions
+On startup, the server creates all database tables and loads the initial permissions.
 
-## API Overview
+## API
 
-All endpoints are prefixed with their module version path. JWT is sent via HTTP-only cookies on login/register.
+Each module has its own route prefix, all versioned:
 
-| Module | Prefix |
-|---|---|
-| Auth & Users | `/users/api/v1` |
-| Company user management | `/users/api/v1` |
-| Companies | `/companies/api/v1` |
-| Roles | `/roles/api/v1` |
-| Role permissions | `/role-permissions/api/v1` |
-| Categories | `/categories/api/v1` |
-| Products | `/products/api/v1` |
-| Stock | `/stock/api/v1` |
+Auth and users live under `/users/api/v1`, company user management is also under `/users/api/v1`, companies under `/companies/api/v1`, roles under `/roles/api/v1`, role permissions under `/role-permissions/api/v1`, categories under `/categories/api/v1`, products under `/products/api/v1`, and stock under `/stock/api/v1`.
 
-Interactive API docs available at `/apidoc/swagger` once the server is running.
+Interactive documentation is available at `/apidoc/swagger` while the server is running.
 
 ## Authentication
 
-Registration creates a company and an OWNER user with all permissions assigned. Login returns a JWT access token (30 min) and refresh token (30 days) via cookies.
+Registration creates a company and an OWNER user with all permissions assigned. Login returns an access token (30 min) and a refresh token (30 days) via cookies.
 
 ```
-POST /users/api/v1/register   # Create company + owner user
-POST /users/api/v1/login      # Get access + refresh tokens
-POST /users/api/v1/refresh    # Rotate tokens
-POST /users/api/v1/logout     # Clear cookies
+POST /users/api/v1/register   # Creates company + owner user
+POST /users/api/v1/login      # Returns access + refresh tokens
+POST /users/api/v1/refresh    # Rotates the tokens
+POST /users/api/v1/logout     # Clears the cookies
 GET  /users/api/v1/me         # Current user profile
 ```
 
 ## Authorization
 
-Every protected endpoint uses two layers:
+Every protected endpoint goes through two layers: `@jwt_required()` validates the token, and `@require_permission("permission_name")` checks that the user's role has the required permission. On top of that, resource endpoints use `@require_user_from_same_company()` to make sure a user can't access another company's data.
 
-1. `@jwt_required()` — validates the JWT token
-2. `@require_permission("permission_name")` — checks the user's role has the required permission (DB lookup per request)
+## Tests
 
-Additionally, resource endpoints use `@require_user_from_same_company()` to enforce tenant isolation — users cannot access resources from other companies.
-
-## Running Tests
-
-Tests use SQLite in-memory and are fully isolated (DB is wiped between each test).
+Tests run on an in-memory SQLite database and are isolated from each other; the database is wiped between each test.
 
 ```bash
 pytest
@@ -140,16 +103,16 @@ pytest tests/test_users.py -v      # specific file
 
 ```bash
 alembic upgrade head                                    # apply migrations
-alembic revision --autogenerate -m "description"        # generate new migration
+alembic revision --autogenerate -m "description"         # generate a new migration
 ```
 
-## Quick start
+## Usage example
 
-The typical flow is: after registration or login, the server sets an authentication cookie. The client then uses that cookie automatically when making requests to protected endpoints.
+After registering or logging in, the server sets an authentication cookie that the client automatically uses on subsequent requests to protected endpoints.
 
-All examples use `curl`. The `-c cookies.txt` flag saves the JWT cookie on login; `-b cookies.txt` sends it on subsequent requests.
+The examples use curl. The `-c cookies.txt` flag saves the login cookie, and `-b cookies.txt` sends it on the following requests.
 
-### 1. Register (creates company + owner user)
+Register (creates company + owner user):
 
 ```bash
 curl -s -X POST http://localhost:8000/users/api/v1/register \
@@ -171,7 +134,7 @@ curl -s -X POST http://localhost:8000/users/api/v1/register \
   }'
 ```
 
-### 2. Login
+Login:
 
 ```bash
 curl -s -X POST http://localhost:8000/users/api/v1/login \
@@ -183,7 +146,7 @@ curl -s -X POST http://localhost:8000/users/api/v1/login \
   }'
 ```
 
-### 3. Create a product
+Create a product:
 
 ```bash
 curl -s -X POST http://localhost:8000/products/api/v1/create \
@@ -197,14 +160,14 @@ curl -s -X POST http://localhost:8000/products/api/v1/create \
   }'
 ```
 
-### 4. List products
+List products:
 
 ```bash
 curl -s http://localhost:8000/products/api/v1/get/all \
   -b cookies.txt
 ```
 
-### 5. Logout
+Logout:
 
 ```bash
 curl -s -X POST http://localhost:8000/users/api/v1/logout \
