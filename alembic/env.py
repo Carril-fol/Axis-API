@@ -13,19 +13,17 @@ if SRC_DIR not in sys.path:
 from dotenv import load_dotenv
 load_dotenv()
 
-from core.database import Base
+from shared.database.database import Base
 
-# Import every entity so autogenerate sees the full schema.
-# Missing an entity here causes autogenerate to emit a spurious DROP TABLE.
-from modules.users.user_entity import UserEntity
-from modules.companies.company_entity import CompanyEntity
-from modules.roles.role_entity import RoleEntity
-from modules.permissions.permissions_entity import PermissionsEntity
-from modules.role_permissions.role_permissions_entity import RolePermissionEntity
-from modules.users_companies.users_companies_entity import UsersCompaniesEntity
-from modules.categories.category_entity import CategoryEntity
-from modules.products.product_entity import ProductEntity
-from modules.stock.stock_entity import StockEntity
+from users.entity import UserEntity
+from companies.entity import CompanyEntity
+from roles.entity import RoleEntity
+from permissions.entity import PermissionsEntity
+from role_permissions.entity import RolePermissionEntity
+from users_companies.entity import UserCompanyEntity
+from categories.entity import CategoryEntity
+from products.entity import ProductEntity
+from stock.entity import StockEntity
 
 config = context.config
 
