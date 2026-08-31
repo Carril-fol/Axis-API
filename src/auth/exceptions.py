@@ -1,18 +1,21 @@
-class EmailInvalidFormat(Exception):
-    def __init__(self):
-        super().__init__("The email format is invalid.")
-        
-
-class PasswordDontMatch(Exception):
-    def __init__(self):
-        super().__init__("Passwords do not match.")
+from shared.exceptions import AppException
 
 
-class InvalidCredentials(Exception):
-    def __init__(self):
-        super().__init__("Invalid credentials.")
-        
+class EmailInvalidFormat(AppException):
+    status_code = 400
+    message = "The email format is invalid."
 
-class UserNotFound(Exception):
-    def __init__(self):
-        super().__init__("User not found.")
+
+class PasswordDontMatch(AppException):
+    status_code = 400
+    message = "Passwords do not match."
+
+
+class InvalidCredentials(AppException):
+    status_code = 401
+    message = "Invalid credentials."
+
+
+class UserNotFound(AppException):
+    status_code = 401
+    message = "Invalid credentials."
