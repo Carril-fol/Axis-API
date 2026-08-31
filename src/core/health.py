@@ -1,13 +1,14 @@
 from flask import Blueprint
-from .database import Database
+from sqlalchemy import text
+
+from shared.database.database import Database
 
 health_blueprint = Blueprint("health", __name__)
 
 @health_blueprint.route("/health", methods=["GET"])
 def health():
     try:
-        with Database.session() as session:
-            session.execute(__import__("sqlalchemy").text("SELECT 1"))
+        Database.session().execute(text("SELECT 1"))
         db_status = "ok"
     except Exception:
         db_status = "error"

@@ -1,26 +1,28 @@
 import os
+import time
 import logging
 
-configure = False
+from flask import request, g
 
-def _configure_logger():
-    global configure
-    if configure:
-        return
+from .extensions import app
 
-    level = logging.DEBUG if os.getenv("FLASK_ENV") == "development" else logging.INFO
+app.logger.setLevel(logging.DEBUG if os.getenv("FLASK_ENV") == "development" else logging.INFO)
 
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter(
-        fmt="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    ))
 
-    root = logging.getLogger()
-    root.setLevel(level)
-    root.addHandler(handler)
-    configure = True
+@app.before_request
+def start_timer():
+    """Runs before every request to record the start time."""
+    g.start_time = time.time()
 
-def get_logger(name: str) -> logging.Logger:
-    _configure_logger()
-    return logging.getLogger(name)
+
+@app.after_request
+def log_request_info(response):
+    start_time = g.pop("start_time", None)
+    duration_ms = round((time.time() - start_time) * 1000, 2) if start_time else 0.0
+
+    app.logger.info(
+        f"Method: {request.method} | Path: {request.path} | "
+        f"Status: {response.status_code} | Duration: {duration_ms}ms"
+    )
+
+    return response

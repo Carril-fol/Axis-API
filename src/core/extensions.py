@@ -10,7 +10,6 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from spectree import SpecTree
 from spectree.models import SecurityScheme
 from flask_talisman import Talisman
-from flask_caching import Cache
 
 # Loading environment variables
 load_dotenv()
@@ -45,7 +44,7 @@ limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=["60 per minute", "1000 per hour"],
-    storage_uri=os.getenv("REDIS_URL", "redis://redis:6379")
+    storage_uri=os.getenv("REDIS_URL", "memory://")
 )
 
 
@@ -78,6 +77,3 @@ talisman = Talisman(
     frame_options="SAMEORIGIN",
     content_security_policy=False,
 )
-
-# Flask-Caching
-cache = Cache(app, config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 30})
