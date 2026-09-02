@@ -34,12 +34,12 @@ user_company_repository = UserCompanyRepository()
 
 
 permission_service = PermissionService(permission_repository)
-product_service = ProductService(product_repository, stock_repository)
-stock_service = StockService(stock_repository, product_repository)
+stock_service = StockService(stock_repository)
 role_service = RoleService(role_repository)
 user_service = UserService(user_repository)
 
 
+product_service = ProductService(product_repository, stock_service)
 category_service = CategoryService(category_repository, product_service)
 company_service = CompanyService(company_repository, role_service)
 role_permission_service = RolePermissionService(
