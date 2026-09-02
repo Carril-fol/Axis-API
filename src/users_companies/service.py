@@ -1,7 +1,7 @@
 from shared.service import BaseService
 
 from users.interfaces import IUserService
-from users.model import RegisterInputFromCompany
+from .model import RegisterInputFromCompany
 
 from roles.interfaces import IRoleService
 
@@ -60,17 +60,17 @@ class UserCompanyService(IUserCompanyService, BaseService):
         return self.user_service.delete_user(user_id)
 
     def get_users_from_company(self, company_id: int) -> list[dict]:
-        filas = self.user_company_repo.get_users_with_role_by_company_id(company_id)
+        rows = self.user_company_repo.get_users_with_role_by_company_id(company_id)
         return [
             UserFromCompanyModel(
-                id=usuario.id,
-                first_name=usuario.first_name,
-                last_name=usuario.last_name,
-                email=usuario.email,
-                date_creation=usuario.date_creation,
+                id=user.id,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                email=user.email,
+                date_creation=user.date_creation,
                 role_id=role_id,
             ).model_dump()
-            for usuario, role_id in filas
+            for user, role_id in rows
         ]
 
     def create_membership(self, user_id: int, role_id: int, company_id: int) -> UserCompanyEntity:

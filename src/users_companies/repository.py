@@ -20,11 +20,11 @@ class UserCompanyRepository(BaseRepository):
             .outerjoin(PermissionsEntity, PermissionsEntity.id == RolePermissionEntity.permission_id)
             .where(UserCompanyEntity.user_id == user_id)
         )
-        filas = self.db.execute(stmt).all()
-        if not filas:
+        rows = self.db.execute(stmt).all()
+        if not rows:
             return None, set()
 
-        return filas[0][0], {nombre for _, nombre in filas if nombre}
+        return rows[0][0], {name for _, name in rows if name}
 
     def get_user_company_role_by_user_id(self, user_id: int) -> UserCompanyEntity | None:
         stmt = select(UserCompanyEntity).where(UserCompanyEntity.user_id == user_id)

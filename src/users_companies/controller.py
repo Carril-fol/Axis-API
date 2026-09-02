@@ -3,17 +3,14 @@ from flask import Blueprint
 from flask_jwt_extended import jwt_required
 
 from core.extensions import spectree, limiter
+from shared.models import ErrorOutput, MessageResponse
 from shared.authz import get_current_user_company
 from .model import RegisterInputFromCompany, UsersFromCompanyOutput
 
 from container import user_company_service
 from users.middleware import require_user_from_same_company
 from users.model import (
-    RegisterOutput,
-    UpdateUserInput,
-    UpdateUserOutput,
-    DeleteUserOutput,
-    ErrorOutput
+    UpdateUserInput
 )
 
 from role_permissions.middleware import require_permission
@@ -31,12 +28,11 @@ users_companies_blueprint = Blueprint(
 @spectree.validate(
     json=RegisterInputFromCompany,
     resp=Response(
-        HTTP_201=RegisterOutput,
+        HTTP_201=MessageResponse,
         HTTP_400=ErrorOutput,
-        HTTP_422=ErrorOutput,
         HTTP_403=ErrorOutput
     ),
-    tags=["users"]
+    tags=["Users"]
 )
 def create_user_for_company(json: RegisterInputFromCompany):
     company_id: int = get_current_user_company().company_id
@@ -53,12 +49,11 @@ def create_user_for_company(json: RegisterInputFromCompany):
 @spectree.validate(
     json=UpdateUserInput,
     resp=Response(
-        HTTP_200=UpdateUserOutput,
+        HTTP_200=MessageResponse,
         HTTP_400=ErrorOutput,
-        HTTP_422=ErrorOutput,
         HTTP_403=ErrorOutput
     ),
-    tags=["users"]
+    tags=["Users"]
 )
 def update_user_from_company(json: UpdateUserInput, id: int):
     data: dict = json.model_dump(exclude_unset=True)
@@ -75,12 +70,11 @@ def update_user_from_company(json: UpdateUserInput, id: int):
 @require_permission("delete_user")
 @spectree.validate(
     resp=Response(
-        HTTP_200=DeleteUserOutput,
+        HTTP_200=MessageResponse,
         HTTP_400=ErrorOutput,
-        HTTP_422=ErrorOutput,
         HTTP_403=ErrorOutput
     ),
-    tags=["users"]
+    tags=["Users"]
 )
 def delete_user_from_company(id: int):
     requesting_user_id: int = get_current_user_company().user_id
@@ -98,7 +92,7 @@ def delete_user_from_company(id: int):
         HTTP_200=UsersFromCompanyOutput,
         HTTP_403=ErrorOutput
     ),
-    tags=["users"]
+    tags=["Users"]
 )
 def get_users_from_company():
     company_id: int = get_current_user_company().company_id
