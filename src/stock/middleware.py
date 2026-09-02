@@ -4,7 +4,7 @@ from flask_jwt_extended import verify_jwt_in_request
 
 from shared.authz import get_current_user_company
 
-from container import stock_service, product_repository
+from container import stock_service
 
 def require_stock_from_same_company():
     def decorator(fn):
@@ -24,4 +24,3 @@ def require_stock_from_same_company():
             return fn(*args, **kwargs)
         return wrapper
     return decorator
-

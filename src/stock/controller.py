@@ -3,14 +3,13 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from spectree import Response
 from core.extensions import spectree
+from shared.models import ErrorOutput, MessageResponse
 
 from .middleware import require_stock_from_same_company
 from .model import (
     UpdateStockInput,
-    UpdateStockOutput,
     StockListDetail,
-    StockItemResponse,
-    ErrorOutput
+    StockItemResponse
 )
 
 from role_permissions.middleware import require_permission
@@ -36,7 +35,7 @@ stock_blueprint = Blueprint(
         HTTP_404=ErrorOutput,
         HTTP_500=ErrorOutput,
     ),
-    tags=["stock"]
+    tags=["Stock"]
 )
 def get_all_stock():
     user_data = get_current_user_company()
@@ -65,7 +64,7 @@ def get_all_stock():
         HTTP_404=ErrorOutput,
         HTTP_500=ErrorOutput,
     ),
-    tags=["stock"]
+    tags=["Stock"]
 )
 def get_stock_by_id(id: int):
     stock = stock_service.get_stock_by_id(id)
@@ -79,12 +78,12 @@ def get_stock_by_id(id: int):
 @spectree.validate(
     json=UpdateStockInput,
     resp=Response(
-        HTTP_200=UpdateStockOutput,
+        HTTP_200=MessageResponse,
         HTTP_400=ErrorOutput,
         HTTP_404=ErrorOutput,
         HTTP_500=ErrorOutput,
     ),
-    tags=["stock"]
+    tags=["Stock"]
 )
 def update_stock(id: int, json: UpdateStockInput):
     data = json.model_dump(exclude_unset=True)
@@ -103,7 +102,7 @@ def update_stock(id: int, json: UpdateStockInput):
         HTTP_404=ErrorOutput,
         HTTP_500=ErrorOutput,
     ),
-    tags=["stock"]
+    tags=["Stock"]
 )
 def get_low_stock():
     user_data = get_current_user_company()

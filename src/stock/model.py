@@ -1,34 +1,62 @@
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from typing import Optional, Literal
+from enum import StrEnum
+from products.model import ProductModel
+from shared.models import PaginatedResponse
 from pydantic import BaseModel, Field, field_validator
 
-StatusType = Literal['IN STOCK', 'LOW STOCK', 'OUT OF STOCK']
+
+class StockStatus(StrEnum):
+    IN_STOCK = 'IN STOCK'
+    LOW_STOCK = 'LOW STOCK'
+    OUT_OF_STOCK = 'OUT OF STOCK'
 
 LOW_STOCK_THRESHOLD = 10
 
 
-def derive_stock_status(quantity: int) -> StatusType:
-    """Stock status is derived from quantity, never persisted.
-
-    The product lifecycle (ACTIVE/INACTIVE) lives on the product; here we only
-    describe how much there is. A deactivated product cascades to quantity 0,
-    which naturally reads as 'OUT OF STOCK'.
-    """
+def derive_stock_status(quantity: int) -> StockStatus:
     if not quantity or quantity <= 0:
-        return 'OUT OF STOCK'
+        return StockStatus.OUT_OF_STOCK
     if quantity < LOW_STOCK_THRESHOLD:
-        return 'LOW STOCK'
-    return 'IN STOCK'
+        return StockStatus.LOW_STOCK
+    return StockStatus.IN_STOCK
 
 
 class BaseStockModel(BaseModel):
-    product_id: Optional[int] = Field(default=None, description='FK of the product')
-    quantity: Optional[int] = Field(default=0, description='Quantity of the product in stock')
-    date_updated: Optional[datetime] = Field(
+    product_id: int = Field(..., description='FK of the product')
+    quantity: int = Field(default=0, description='Quantity of the product in stock')
+    date_updated: datetime = Field(
         default_factory=datetime.now,
         description='Date of the last stock update'
     )
+
+    @field_validator('date_updated', mode='before')
+    @classmethod
+    def parse_date(cls, value):
+        if isinstance(value, str):
+            return parsedate_to_datetime(value)
+        return value
+
+    @field_validator('quantity')
+    @classmethod
+    def quantity_must_be_non_negative(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError('Quantity must be zero or greater')
+        return value
+
+
+class CreateStockModel(BaseStockModel):
+    quantity: int = Field(..., ge=0, description='Initial quantity in stock')
+
+
+class UpdateStockInput(BaseModel):
+    quantity: int = Field(..., ge=0, description='New quantity on hand. Cannot be negative', examples=[48])
+
+
+class UpdateStockModel(BaseModel):
+    product_id: int | None = Field(default=None, description='FK of the product')
+    quantity: int | None = Field(default=None, description='Quantity of the product in stock')
+    date_updated: datetime | None = Field(default=None, description='Date of the last stock update')
 
     @field_validator('date_updated', mode='before')
     @classmethod
@@ -45,65 +73,19 @@ class BaseStockModel(BaseModel):
         return value
 
 
-class CreateStockModel(BaseStockModel):
-    product_id: int = Field(..., description='FK of the product (required)')
-    quantity: int = Field(..., ge=0, description='Initial quantity in stock')
-
-
-class CreateStockInput(BaseModel):
-    product_id: int = Field(..., description='FK of the product')
-    quantity: int = Field(..., ge=0, description='Initial quantity in stock')
-
-
-class CreateStockOutput(BaseModel):
-    msg: str = Field(..., examples=["Create successful"])
-
-
-class UpdateStockInput(BaseModel):
-    quantity: int = Field(..., ge=0, description='Updated quantity')
-
-
-class UpdateStockModel(BaseStockModel):
-    pass
-
-
-class UpdateStockOutput(BaseModel):
-    msg: str = Field(..., examples=["Update successful"])
-
-
 class StockDetail(BaseStockModel):
-    id: int
-    status: StatusType = Field(..., description='Stock status derived from quantity')
+    id: int = Field(..., description="ID of the stock row", examples=[1])
+    status: StockStatus = Field(..., description='Stock status derived from quantity')
 
 
 class StockWithProductDetail(BaseModel):
-    stock: StockDetail
-    product: dict
+    stock: StockDetail = Field(..., description="Stock row: quantity and derived status")
+    product: ProductModel = Field(..., description="The product the stock belongs to")
 
 
 class StockItemResponse(BaseModel):
-    data: StockWithProductDetail
+    data: StockWithProductDetail = Field(..., description="Stock of a single product")
 
 
-class StockListDetail(BaseModel):
-    data: list[StockWithProductDetail]
-    total: int
-    page: int
-    per_page: int
-    total_pages: int
-
-
-class StockProductDetail(BaseModel):
-    id: int = Field(..., description='Stock ID')
-    product_id: int = Field(..., description='Product ID')
-    quantity: int = Field(..., description='Current quantity of the product')
-    status: StatusType = Field(..., description='Current stock status')
-    name: str = Field(..., description='Product name')
-    description: str = Field(..., description='Product description')
-    category_id: int = Field(..., description='Product category ID')
-    date_updated: datetime = Field(..., description='Last stock update date')
-    date_creation: datetime = Field(..., description='Stock creation date')
-
-
-class ErrorOutput(BaseModel):
-    msg: str
+class StockListDetail(PaginatedResponse):
+    data: list[StockWithProductDetail] = Field(..., description="Stock rows for the requested page")
