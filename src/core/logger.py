@@ -11,7 +11,6 @@ app.logger.setLevel(logging.DEBUG if os.getenv("FLASK_ENV") == "development" els
 
 @app.before_request
 def start_timer():
-    """Runs before every request to record the start time."""
     g.start_time = time.time()
 
 
