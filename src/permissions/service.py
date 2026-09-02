@@ -19,7 +19,7 @@ class PermissionService(IPermissionService, BaseService):
         self._permission_repo = permission_repo
 
     def _get_permission_by_name_or_raise(self, name: str) -> PermissionsEntity:
-        permission = self._permission_repo.get_permission_by_name(name.upper())
+        permission = self._permission_repo.get_permission_by_name(name)
         if not permission:
             raise PermissionNotFound()
         return permission
@@ -33,9 +33,7 @@ class PermissionService(IPermissionService, BaseService):
         return [PermissionModel.model_validate(permission).model_dump() for permission in permissions]
 
     def create_permission(self, data: dict):
-        normalized_name = data["name"].upper()
-        
-        existing = self._permission_repo.get_permission_by_name(normalized_name)
+        existing = self._permission_repo.get_permission_by_name(data["name"])
         if existing:
             raise PermissionAlreadyExists()
 

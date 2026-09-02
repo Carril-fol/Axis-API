@@ -13,8 +13,3 @@ class PermissionNotFound(PermissionException):
 class PermissionAlreadyExists(PermissionException):
     status_code = 409
     message = "Permission with that name already exists."
-
-
-class InsufficientRolePrivileges(PermissionException):
-    status_code = 403
-    message = "You don't have privileges for this action."
