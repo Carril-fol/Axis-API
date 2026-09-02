@@ -34,9 +34,9 @@ target_metadata = Base.metadata
 
 
 def get_url() -> str:
-    url = os.getenv("NEON_DATABASE_URL")
+    url = os.getenv("DATABASE_URL")
     if not url:
-        raise RuntimeError("NEON_DATABASE_URL is not set in the environment.")
+        raise RuntimeError("DATABASE_URL is not set in the environment.")
     return url
 
 
