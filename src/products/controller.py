@@ -4,16 +4,13 @@ from flask_jwt_extended import jwt_required
 from spectree import Response
 
 from core.extensions import spectree
+from shared.models import ErrorOutput, MessageResponse
 
 from .model import (
     CreateProductInputModel,
-    CreateProductOutputModel,
     UpdateProductInputModel,
-    UpdateProductOutputModel,
-    DetailProductModel,
-    DeleteProductModel,
-    ListDetailProductModel,
-    ErrorOutput
+    DetailProductResponse,
+    ListDetailProductModel
 )
 
 from role_permissions.middleware import require_permission
@@ -36,7 +33,7 @@ product_controller = Blueprint(
 @spectree.validate(
     json=CreateProductInputModel,
     resp=Response(
-        HTTP_201=CreateProductOutputModel,
+        HTTP_201=MessageResponse,
         HTTP_400=ErrorOutput
     ),
     tags=["Product"]
@@ -56,7 +53,7 @@ def create_product(json: CreateProductInputModel):
 @require_permission("read_product")
 @spectree.validate(
     resp=Response(
-        HTTP_200=DetailProductModel,
+        HTTP_200=DetailProductResponse,
         HTTP_400=ErrorOutput
     ),
     tags=["Product"]
@@ -76,7 +73,7 @@ def detail_product(id: int):
 @spectree.validate(
     json=UpdateProductInputModel,
     resp=Response(
-        HTTP_200=UpdateProductOutputModel,
+        HTTP_200=MessageResponse,
         HTTP_400=ErrorOutput
     ),
     tags=["Product"]
@@ -97,7 +94,7 @@ def update_product(json: UpdateProductInputModel, id: int):
 @require_permission("delete_product")
 @spectree.validate(
     resp=Response(
-        HTTP_200=DeleteProductModel,
+        HTTP_200=MessageResponse,
         HTTP_400=ErrorOutput
     ),
     tags=["Product"]
@@ -119,7 +116,8 @@ def deactivate_product(id: int):
     resp=Response(
         HTTP_200=ListDetailProductModel,
         HTTP_400=ErrorOutput
-    )
+    ),
+    tags=["Product"]
 )
 def get_all_products():
     user_company = get_current_user_company()
@@ -146,9 +144,10 @@ def get_all_products():
 @require_permission("read_product")
 @spectree.validate(
     resp=Response(
-        HTTP_200=DetailProductModel,
+        HTTP_200=DetailProductResponse,
         HTTP_400=ErrorOutput
-    )
+    ),
+    tags=["Product"]
 )
 def get_product_by_name(name: str):
     user_company = get_current_user_company()

@@ -5,14 +5,13 @@ from .repository import ProductRepository
 from .exceptions import ProductNotFound, ProductHasAlreadyStatus
 from .model import (
     ProductModel, 
-    BaseProductModel,
+    UpdateProductModel,
+    DetailProductModel,
     CreateProductModel,
     CreateProductInputModel
 )
 
-from stock.entity import StockEntity
-from stock.repository import StockRepository
-from stock.model import CreateStockModel
+from stock.interfaces import IStockService
 from .interfaces import IProductService
 
 
@@ -21,10 +20,10 @@ class ProductService(IProductService, BaseService):
     def __init__(
             self, 
             product_repository: ProductRepository, 
-            stock_repository: StockRepository
+            stock_service: IStockService
         ):
         self._product_repository = product_repository
-        self._stock_repository = stock_repository
+        self._stock_service = stock_service
     
     def _product_exist_by_id(self, id: int) -> ProductNotFound | ProductEntity:
         product = self._product_repository.get_by_id(id)
@@ -38,14 +37,9 @@ class ProductService(IProductService, BaseService):
             raise ProductHasAlreadyStatus()
         return product
 
-    def _create_stock(self, data: dict, product_data_dict: dict) -> StockEntity:
-        stock_data = {**data, "product_id": product_data_dict.get("id")}
-        stock_entity = StockEntity(**CreateStockModel.model_validate(stock_data).model_dump())
-        return self._stock_repository.create_stock(stock_entity)
-
     def get_product_by_id(self, id: int) -> dict:
         product = self._product_exist_by_id(id)
-        return ProductModel.model_validate(product).model_dump()
+        return DetailProductModel.model_validate(product).model_dump()
     
     def get_products(self, company_id: int, page: int, per_page: int, search: str = None) -> list[dict]:
         products_db, total = self._product_repository.get_products(company_id, page, per_page, search)
@@ -74,14 +68,14 @@ class ProductService(IProductService, BaseService):
         product_created = self._product_repository.create(product_entity)
         product_created_model_dump = ProductModel.model_validate(product_created).model_dump()
         
-        self._create_stock(data, product_created_model_dump)
+        self._stock_service.create_stock(data, product_created_model_dump)
         return product_created
 
     def update_product(self, id: int, data: dict) -> ProductEntity:
         product = self._product_exist_by_id(id)
         self._validate_status_change(product, data)
         
-        product_model_validated_data = BaseProductModel.model_validate(data).model_dump(exclude_unset=True)
+        product_model_validated_data = UpdateProductModel.model_validate(data).model_dump(exclude_unset=True)
         product_to_update = self._update_instance_entity(product_model_validated_data, product)
         return self._product_repository.update(product_to_update)
 
@@ -92,14 +86,8 @@ class ProductService(IProductService, BaseService):
         product_to_deactivate = self._update_instance_entity(data, product)
         product_deactivated = self._product_repository.update(product_to_deactivate)
 
-        self._deactivate_stock_for_product(id)
+        self._stock_service.zero_quantity_for_product(id)
         return product_deactivated
-
-    def _deactivate_stock_for_product(self, product_id: int) -> None:
-        stock = self._stock_repository.get_stock_by_product_id(product_id)
-        if stock and stock.quantity != 0:
-            stock.quantity = 0
-            self._stock_repository.update_stock(stock)
 
     def reassign_category(self, company_id: int, from_category_id: int, to_category_id: int) -> int:
         return self._product_repository.reassign_category(company_id, from_category_id, to_category_id)

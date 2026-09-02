@@ -10,9 +10,6 @@ class ProductRepository(BaseRepository):
     def __init__(self):
         super().__init__(ProductEntity)
         
-    def get_product_by_id(self, id: int) -> ProductEntity | None:
-        return self.get_by_id(id)
-
     def get_products(
         self,
         company_id: int,
@@ -53,7 +50,7 @@ class ProductRepository(BaseRepository):
             ProductEntity.name == name, 
             ProductEntity.company_id == company_id  
         )
-        return self.db.execute(stmt).first()
+        return self.db.scalars(stmt).first()
         
     def reassign_category(self, company_id: int, from_category_id: int, to_category_id: int) -> int:
         stmt = (

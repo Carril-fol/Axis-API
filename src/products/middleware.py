@@ -13,7 +13,7 @@ def require_user_from_same_company():
             verify_jwt_in_request()
             product_id_url = kwargs.get("id")
 
-            product = product_repository.get_product_by_id(product_id_url)
+            product = product_repository.get_by_id(product_id_url)
             if product is None:
                 return jsonify({"error": "Product not found"}), 404
 
