@@ -15,11 +15,6 @@ class RoleIsAlreadyInactive(RoleException):
     message = "Role is already inactive"
 
 
-class RoleIsAlreadyActive(RoleException):
-    status_code = 409
-    message = "Role is already active"
-
-
 class UserNotInCompany(RoleException):
     status_code = 403
     message = "User does not belong to this company"

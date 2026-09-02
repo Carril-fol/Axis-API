@@ -3,18 +3,14 @@ from flask_jwt_extended import jwt_required
 from spectree import Response
 
 from core.extensions import spectree
+from shared.models import ErrorOutput, MessageResponse
 from .middleware import require_user_from_same_company
 from .model import (
     CreateRoleInput,
-    CreateRoleOutput,
     UpdateRoleInput,
-    UpdateRoleOutput,
     AssignRoleInput,
-    AssignRoleOutput,
     DetailRoleModel,
-    RoleListDetail,
-    DeleteRoleOutput,
-    ErrorOutput
+    RoleListDetail
 )
 
 from shared.authz import get_current_user_company
@@ -24,19 +20,17 @@ from container import role_service, role_membership_service
 role_blueprint = Blueprint("roles", __name__, url_prefix="/roles/api/v1")
  
 
-
 @role_blueprint.route("/create-role", methods=["POST"])
 @jwt_required()
 @require_permission("create_role")
 @spectree.validate(
     json=CreateRoleInput,
     resp=Response(
-        HTTP_201=CreateRoleOutput,
+        HTTP_201=MessageResponse,
         HTTP_403=ErrorOutput,
-        HTTP_404=ErrorOutput,
-        HTTP_422=ErrorOutput
+        HTTP_404=ErrorOutput
     ),
-    tags=["roles"]
+    tags=["Roles"]
 )
 def create_role(json: CreateRoleInput):
     data = json.model_dump()
@@ -52,10 +46,9 @@ def create_role(json: CreateRoleInput):
     resp=Response(
         HTTP_200=RoleListDetail,
         HTTP_403=ErrorOutput,
-        HTTP_404=ErrorOutput,
-        HTTP_422=ErrorOutput
+        HTTP_404=ErrorOutput
     ),
-    tags=["roles"]
+    tags=["Roles"]
 )
 def get_all_roles():
     page = max(request.args.get("page", 1, type=int), 1)
@@ -74,10 +67,9 @@ def get_all_roles():
     resp=Response(
         HTTP_200=DetailRoleModel,
         HTTP_403=ErrorOutput,
-        HTTP_404=ErrorOutput,
-        HTTP_422=ErrorOutput
+        HTTP_404=ErrorOutput
     ),
-    tags=["roles"]
+    tags=["Roles"]
 )
 def get_role_by_id(id: int):
     role = role_service.get_role_by_id(id)
@@ -90,12 +82,11 @@ def get_role_by_id(id: int):
 @require_user_from_same_company()
 @spectree.validate(
     resp=Response(
-        HTTP_200=DeleteRoleOutput,
+        HTTP_200=MessageResponse,
         HTTP_403=ErrorOutput,
-        HTTP_404=ErrorOutput,
-        HTTP_422=ErrorOutput
+        HTTP_404=ErrorOutput
     ),
-    tags=["roles"]
+    tags=["Roles"]
 )
 def delete_role(id: int):
     company_id = get_current_user_company().company_id
@@ -112,12 +103,11 @@ def delete_role(id: int):
 @spectree.validate(
     json=UpdateRoleInput,
     resp=Response(
-        HTTP_200=UpdateRoleOutput,
+        HTTP_200=MessageResponse,
         HTTP_403=ErrorOutput,
         HTTP_404=ErrorOutput,
-        HTTP_422=ErrorOutput,
     ),
-    tags=["roles"]
+    tags=["Roles"]
 )
 def update_role(id: int, json: UpdateRoleInput):
     role_service.update_role(id, json.model_dump(exclude_unset=True))
@@ -130,12 +120,11 @@ def update_role(id: int, json: UpdateRoleInput):
 @spectree.validate(
     json=AssignRoleInput,
     resp=Response(
-        HTTP_200=AssignRoleOutput,
+        HTTP_200=MessageResponse,
         HTTP_403=ErrorOutput,
         HTTP_404=ErrorOutput,
-        HTTP_422=ErrorOutput,
     ),
-    tags=["roles"]
+    tags=["Roles"]
 )
 def assign_role_to_user(json: AssignRoleInput):
     data = json.model_dump()
