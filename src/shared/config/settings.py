@@ -4,7 +4,7 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
-    NEON_DATABASE_URL = os.getenv("NEON_DATABASE_URL")
+    DATABASE_URL = os.getenv("DATABASE_URL")
     SERVER_HOST = os.getenv("SERVER_HOST")
     SERVER_PORT = int(os.getenv("SERVER_PORT", 8000))
     JWT_TOKEN_LOCATION = ["cookies", "headers"]

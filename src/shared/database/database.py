@@ -29,7 +29,7 @@ class Database:
             return
 
         cls._engine = create_engine(
-            Config.NEON_DATABASE_URL,
+            Config.DATABASE_URL,
             pool_pre_ping=True,
             pool_recycle=1800,
             pool_size=5,

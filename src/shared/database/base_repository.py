@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Type, Optional, List
+from typing import Generic, TypeVar, Type
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -30,8 +30,8 @@ class BaseRepository(Generic[T]):
         self.db.delete(entity)
         self.db.flush()
 
-    def get_by_id(self, id: int) -> Optional[T]:
+    def get_by_id(self, id: int) -> T | None:
         return self.db.get(self.model, id)
 
-    def get_all(self) -> List[T]:
+    def get_all(self) -> list[T]:
         return self.db.execute(select(self.model)).scalars().all()
