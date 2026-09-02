@@ -1,4 +1,5 @@
 from core.extensions import spectree, limiter
+from shared.models import ErrorOutput, MessageResponse
 
 from spectree import Response
 from flask import Blueprint
@@ -7,13 +8,9 @@ from flask_jwt_extended import jwt_required
 from .middleware import require_permission
 from .model import (
     AssignRolePermissionInput,
-    AssignRolePermissionOutput,
     UpdateRolePermissionInput,
-    UpdateRolePermissionOutput,
     DeleteRolePermissionQuery,
-    ListRolePermissionsOutput,
-    RevokeRolePermissionOutput,
-    ErrorOutput
+    ListRolePermissionsOutput
 )
 from shared.authz import get_current_user_company
 
@@ -33,12 +30,11 @@ role_permission_controller = Blueprint(
 @spectree.validate(
     json=AssignRolePermissionInput,
     resp=Response(
-        HTTP_201=AssignRolePermissionOutput,
+        HTTP_201=MessageResponse,
         HTTP_400=ErrorOutput,
-        HTTP_422=ErrorOutput,
         HTTP_429=ErrorOutput,
     ),
-    tags=["role-permissions"]
+    tags=["Role-permissions"]
 )
 def assign_role_permission(json: AssignRolePermissionInput):
     data = json.model_dump()
@@ -56,12 +52,11 @@ def assign_role_permission(json: AssignRolePermissionInput):
 @spectree.validate(
     json=UpdateRolePermissionInput,
     resp=Response(
-        HTTP_200=UpdateRolePermissionOutput,
+        HTTP_200=MessageResponse,
         HTTP_403=ErrorOutput,
         HTTP_404=ErrorOutput,
-        HTTP_422=ErrorOutput,
     ),
-    tags=["role-permissions"]
+    tags=["Role-permissions"]
 )
 def update_role_permission(id: int, json: UpdateRolePermissionInput):
     data = json.model_dump(exclude_unset=True)
@@ -80,7 +75,7 @@ def update_role_permission(id: int, json: UpdateRolePermissionInput):
         HTTP_200=ListRolePermissionsOutput,
         HTTP_403=ErrorOutput,
     ),
-    tags=["role-permissions"]
+    tags=["Role-permissions"]
 )
 def list_role_permissions(role_id: int):
     user_data = get_current_user_company()
@@ -97,12 +92,11 @@ def list_role_permissions(role_id: int):
 @spectree.validate(
     query=DeleteRolePermissionQuery,
     resp=Response(
-        HTTP_200=RevokeRolePermissionOutput,
+        HTTP_200=MessageResponse,
         HTTP_403=ErrorOutput,
         HTTP_404=ErrorOutput,
-        HTTP_422=ErrorOutput,
     ),
-    tags=["role-permissions"]
+    tags=["Role-permissions"]
 )
 def revoke_role_permission(query: DeleteRolePermissionQuery):
     user_data = get_current_user_company()

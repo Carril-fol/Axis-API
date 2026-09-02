@@ -13,7 +13,7 @@ def require_permission(permission: str):
             if get_current_user_company() is None:
                 return {"error": "Forbidden"}, 403
 
-            if permission.upper() not in get_current_permissions():
+            if permission not in get_current_permissions():
                 return {"error": "Forbidden"}, 403
 
             return f(*args, **kwargs)
