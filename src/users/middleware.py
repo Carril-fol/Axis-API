@@ -26,4 +26,3 @@ def require_user_from_same_company():
             return fn(*args, **kwargs)
         return wrapper
     return decorator
-

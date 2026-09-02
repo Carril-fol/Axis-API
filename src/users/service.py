@@ -18,7 +18,7 @@ class UserService(IUserService, BaseService):
         self.user_repository = user_repository
 
     def _get_user_or_raise(self, user_id: int) -> UserEntity:
-        user = self.user_repository.get_user_by_id(user_id)
+        user = self.user_repository.get_by_id(user_id)
         if not user:
             raise UserNotFound()
         return user
@@ -30,7 +30,7 @@ class UserService(IUserService, BaseService):
 
     def create_user(self, data: dict) -> UserEntity:
         user_dump = CreateUserModel.model_validate(data).model_dump()
-        return self.user_repository.create_user(UserEntity(**user_dump))
+        return self.user_repository.create(UserEntity(**user_dump))
 
     def update_user(self, user_id: int, user_data: dict) -> UserEntity:
         user = self._get_user_or_raise(user_id)
@@ -40,11 +40,11 @@ class UserService(IUserService, BaseService):
         ).model_dump(exclude_unset=True)
 
         user_to_update = self._update_instance_entity(user_update_model_data, user)
-        return self.user_repository.update_user(user_to_update)
+        return self.user_repository.update(user_to_update)
 
     def delete_user(self, user_id: int) -> None:
         user = self._get_user_or_raise(user_id)
-        return self.user_repository.delete_user(user)
+        return self.user_repository.delete(user)
 
     def get_user_by_email(self, email: str) -> UserEntity | None:
         return self.user_repository.get_user_by_email(email)
