@@ -3,14 +3,13 @@ from flask_jwt_extended import jwt_required
 from spectree import Response
 
 from core.extensions import spectree
+from shared.models import ErrorOutput, MessageResponse
 from container import company_service
 from shared.authz import get_current_user_company
 
 from .model import (
     UpdateCompanyInput,
-    DetailCompanyResponse,
-    ErrorOutput,
-    CompanyOutputResponse
+    DetailCompanyResponse
 )
 
 
@@ -26,9 +25,10 @@ company_controller = Blueprint(
 @spectree.validate(
     json=UpdateCompanyInput,
     resp=Response(
-        HTTP_200=CompanyOutputResponse,
+        HTTP_200=MessageResponse,
         HTTP_400=ErrorOutput
-    )
+    ),
+    tags=['Companies']
 )
 def update_company(json: UpdateCompanyInput, company_id: int):
     data = json.model_dump(exclude_unset=True)
@@ -45,7 +45,8 @@ def update_company(json: UpdateCompanyInput, company_id: int):
     resp=Response(
         HTTP_200=DetailCompanyResponse,
         HTTP_400=ErrorOutput
-    )
+    ),
+    tags=['Companies']
 )
 def detail_company(company_id: int):
     user_data = get_current_user_company()

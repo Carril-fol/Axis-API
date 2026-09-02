@@ -35,22 +35,10 @@ class UpdateCompanyInput(BaseModel):
     country: str | None = Field(default=None, min_length=2, max_length=100, description="Country of the company")
 
 
-class UpdateCompanyModel(BaseCompanyModel):
-    pass
-
-
 class DetailCompanyModel(BaseCompanyModel):
     id: int = Field(..., description="Id from company")
     model_config = ConfigDict(from_attributes=True)
 
 
 class DetailCompanyResponse(BaseModel):
-    company: DetailCompanyModel
-
-
-class CompanyOutputResponse(BaseModel):
-    msg: str = Field(..., description='Message response example')
-
-
-class ErrorOutput(BaseModel):
-    msg: str = Field(..., description='Error message')
+    company: DetailCompanyModel = Field(..., description="The company the current user belongs to")
