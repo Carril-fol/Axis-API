@@ -13,6 +13,7 @@ from flask_jwt_extended import (
 )
 
 from core.extensions import limiter, spectree
+from shared.models import ErrorOutput, MessageResponse
 from .model import (
     RegisterWithCompanyInput,
     LoginInput,
@@ -30,11 +31,10 @@ auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth/api/v1")
     json=RegisterWithCompanyInput,
     resp=Response(
         HTTP_201=AuthOutput,
-        HTTP_400=AuthOutput,
-        HTTP_422=AuthOutput,
-        HTTP_429=AuthOutput,
+        HTTP_400=ErrorOutput,
+        HTTP_429=ErrorOutput,
     ),
-    tags=["auth"]
+    tags=["Auth"]
 )
 def register(json: RegisterWithCompanyInput):
     identity = user_registration_orchestrator.register_owner(
@@ -54,11 +54,10 @@ def register(json: RegisterWithCompanyInput):
     json=LoginInput,
     resp=Response(
         HTTP_200=AuthOutput,
-        HTTP_401=AuthOutput,
-        HTTP_422=AuthOutput,
-        HTTP_429=AuthOutput
+        HTTP_401=ErrorOutput,
+        HTTP_429=ErrorOutput
     ),
-    tags=["auth"],
+    tags=["Auth"],
 )
 def login(json: LoginInput):
     user_id = auth_service.authenticate(json)
@@ -74,9 +73,15 @@ def login(json: LoginInput):
 
 @auth_blueprint.route("/logout", methods=["POST"])
 @jwt_required()
-@spectree.validate(tags=["auth"])
+@spectree.validate(
+    resp=Response(
+        HTTP_200=MessageResponse,
+        HTTP_401=ErrorOutput
+    ),
+    tags=["Auth"]
+)
 def logout():
-    response = make_response({"msg": "Logout succesfully"}, 200)
+    response = make_response({"msg": "Logout successfully"}, 200)
     unset_access_cookies(response)
     unset_jwt_cookies(response)
     return response
@@ -84,29 +89,23 @@ def logout():
 
 @auth_blueprint.route("/refresh", methods=["POST"])
 @jwt_required(verify_type=True, refresh=True)
-@spectree.validate(tags=["auth"])
+@spectree.validate(
+    resp=Response(
+        HTTP_200=AuthOutput,
+        HTTP_401=ErrorOutput
+    ),
+    tags=["Auth"]
+)
 def refresh_token():
     current_user = get_jwt_identity()
     new_access_token = create_access_token(identity=current_user)
     new_refresh_token = create_refresh_token(identity=current_user)
 
     response = make_response({
-        "msg": "Token refreshed", 
-        "tokens": {
-            "access_token": new_access_token,
-            "refresh_token": new_refresh_token
-        }
+        "msg": "Token refreshed",
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token
     }, 200)
     set_access_cookies(response, new_access_token)
     set_refresh_cookies(response, new_refresh_token)
     return response
-
-
-#@auth_service.route("/me", methods=["GET"])
-#@jwt_required()
-#@spectree.validate(tags=["auth"])
-#def me():
-    #user_id: int = get_current_user_company().user_id
-    
-    #user_instance = auth_service.get_user_by_id(user_id)
-    #return make_response({"user": user_instance}, 200)
