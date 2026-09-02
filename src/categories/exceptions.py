@@ -10,11 +10,6 @@ class CategoryNotFound(CategoryException):
     message = "Category does not exist."
 
 
-class CategoryAlreadyExists(CategoryException):
-    status_code = 409
-    message = "Category already exists."
-
-
 class CategoryStatusError(CategoryException):
     status_code = 409
     message = "Category already has this status."

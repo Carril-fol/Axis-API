@@ -5,16 +5,15 @@ from spectree import Response
 
 from container import category_service
 from core.extensions import spectree
+from shared.models import ErrorOutput, MessageResponse
 from role_permissions.middleware import require_permission
 from shared.authz import get_current_user_company
 
 from .model import (
-    CreateCategoryInput, 
+    CreateCategoryInput,
     UpdateCategoryInput,
     DetailCategoryResponse,
-    ListDetailCategoryModel,
-    CategoryOutputResponse,
-    ErrorOutput
+    ListDetailCategoryModel
 )
 
 
@@ -31,7 +30,7 @@ category_controller = Blueprint(
 @spectree.validate(
     json=CreateCategoryInput,
     resp=Response(
-        HTTP_201=CategoryOutputResponse, 
+        HTTP_201=MessageResponse, 
         HTTP_400=ErrorOutput
     ),
     tags=["Categories"]
@@ -97,7 +96,7 @@ def get_all_categories_from_company():
 @spectree.validate(
     json=UpdateCategoryInput,
     resp=Response(
-        HTTP_200=CategoryOutputResponse, 
+        HTTP_200=MessageResponse, 
         HTTP_400=ErrorOutput
     ),
     tags=["Categories"]
@@ -116,7 +115,7 @@ def update_category(json: UpdateCategoryInput, id: int):
 @require_permission("delete_category")
 @spectree.validate(
     resp=Response(
-        HTTP_200=CategoryOutputResponse, 
+        HTTP_200=MessageResponse, 
         HTTP_400=ErrorOutput
     ),
     tags=["Categories"]

@@ -13,4 +13,3 @@ class CategoryEntity(Base):
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False, index=True)
     
     companies = relationship(CompanyEntity)
-    

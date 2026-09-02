@@ -1,4 +1,5 @@
 from enum import StrEnum
+from shared.models import PaginatedResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -33,7 +34,7 @@ class CategoryBase(BaseModel):
 
 class CategoryModel(CategoryBase):
     id: int | None = Field(default=None, description="ID of the category")
-    company_id: int
+    company_id: int = Field(..., description="ID of the company the category belongs to", examples=[1])
 
 
 class CreateCategoryInput(CategoryBase):
@@ -45,8 +46,8 @@ class CreateCategoryModel(CategoryBase):
 
 
 class UpdateCategoryInput(BaseModel):
-    name: str | None = Field(default=None, min_length=3, max_length=150)
-    status: CategoryStatus | None = None
+    name: str | None = Field(default=None, min_length=3, max_length=150, description="New name. Omit it to leave the current one", examples=["Cold drinks"])
+    status: CategoryStatus | None = Field(default=None, description="ACTIVE or INACTIVE. Omit it to leave the current one", examples=["ACTIVE"])
 
     @field_validator("name", mode="before")
     @classmethod
@@ -75,17 +76,5 @@ class DetailCategoryResponse(BaseModel):
     category: DetailCategoryModel = Field(..., description='Category detail wrapped in the response envelope')
 
 
-class ListDetailCategoryModel(BaseModel):
+class ListDetailCategoryModel(PaginatedResponse):
     categories: list[DetailCategoryModel] = Field(..., description='List of categories with detailed information')
-    total: int = Field(..., description='Total number of categories')
-    page: int = Field(..., description='Current page number')
-    per_page: int = Field(..., description='Number of categories per page')
-    total_pages: int = Field(..., description='Total number of pages')
-
-
-class CategoryOutputResponse(BaseModel):
-    msg: str = Field(..., description='Error message')
-    
-
-class ErrorOutput(BaseModel):
-    msg: str = Field(..., description='Error message')
