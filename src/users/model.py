@@ -1,10 +1,7 @@
 from datetime import datetime
-from argon2 import PasswordHasher
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .exceptions import PasswordDontMatch
-
-ph = PasswordHasher()
 
 
 class BaseUserModel(BaseModel):
@@ -23,11 +20,6 @@ class BaseUserModel(BaseModel):
 
 class CreateUserModel(BaseUserModel):
     password: str = Field(...)
-
-    @field_validator('password', mode='before')
-    @classmethod
-    def hash_password(cls, value):
-        return ph.hash(value)
 
 
 class UpdateUserInput(BaseModel):
@@ -60,13 +52,6 @@ class UpdateUserModel(BaseModel):
     last_name: str | None = Field(default=None)
     email: str | None = Field(default=None)
     password: str | None = Field(default=None)
-
-    @field_validator('password', mode='before')
-    @classmethod
-    def hash_password(cls, value):
-        if value:
-            return ph.hash(value)
-        return value
 
 
 class DetailUserModel(BaseUserModel):

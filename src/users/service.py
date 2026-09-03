@@ -1,4 +1,5 @@
 from shared.service import BaseService
+from shared.security import hash_password
 
 from .entity import UserEntity
 from .repository import UserRepository
@@ -30,6 +31,7 @@ class UserService(IUserService, BaseService):
 
     def create_user(self, data: dict) -> UserEntity:
         user_dump = CreateUserModel.model_validate(data).model_dump()
+        user_dump["password"] = hash_password(user_dump["password"])
         return self.user_repository.create(UserEntity(**user_dump))
 
     def update_user(self, user_id: int, user_data: dict) -> UserEntity:
@@ -38,6 +40,11 @@ class UserService(IUserService, BaseService):
         user_update_model_data = UpdateUserModel.model_validate(
             user_data
         ).model_dump(exclude_unset=True)
+
+        if user_update_model_data.get("password"):
+            user_update_model_data["password"] = hash_password(
+                user_update_model_data["password"]
+            )
 
         user_to_update = self._update_instance_entity(user_update_model_data, user)
         return self.user_repository.update(user_to_update)
