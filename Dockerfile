@@ -1,30 +1,39 @@
 FROM python:3.13-alpine AS builder
 
+COPY --from=ghcr.io/astral-sh/uv:0.11.23 /uv /bin/uv
+
 RUN apk add --no-cache \
     python3-dev \
     postgresql-dev \
     gcc \
     musl-dev
 
-COPY requirements.txt .
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/opt/venv
 
-RUN pip3 --no-cache-dir install -r requirements.txt
+WORKDIR /axis-api
+
+COPY pyproject.toml uv.lock ./
+
+RUN uv sync --locked --no-dev
 
 
 FROM python:3.13-alpine AS final
 
 RUN apk add --no-cache libpq
 
-WORKDIR /inventra-api
+WORKDIR /axis-api
 
-ENV FLASK_ENV=production
+ENV FLASK_ENV=production \
+    PATH="/opt/venv/bin:$PATH"
 
-COPY --from=builder /usr/local/lib/python3.13 /usr/local/lib/python3.13
-COPY --from=builder /usr/local/bin /usr/local/bin
-
+COPY --from=builder /opt/venv /opt/venv
 
 COPY src/ ./src/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
 
-CMD ["python", "src/app.py"]
+EXPOSE 8000
+
+CMD ["sh", "-c", "alembic upgrade head && python src/app.py"]

@@ -5,10 +5,7 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    depends_on:
-      - redis
-  
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    environment:
+      # Wins over the .env, which sets development for running the app locally.
+      # The container is meant to behave like production: DEBUG off, JWT CSRF on.
+      - FLASK_ENV=production
