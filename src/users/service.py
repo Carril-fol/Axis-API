@@ -5,7 +5,6 @@ from .entity import UserEntity
 from .repository import UserRepository
 from .model import (
     CreateUserModel,
-    DetailUserModel,
     UpdateUserModel,
 )
 from .exceptions import UserNotFound
@@ -23,11 +22,6 @@ class UserService(IUserService, BaseService):
         if not user:
             raise UserNotFound()
         return user
-
-    def _format_user(self, user_entity: UserEntity) -> dict:
-        return DetailUserModel.model_validate(
-            user_entity.to_dict()
-        ).model_dump()
 
     def create_user(self, data: dict) -> UserEntity:
         user_dump = CreateUserModel.model_validate(data).model_dump()
@@ -56,6 +50,3 @@ class UserService(IUserService, BaseService):
     def get_user_by_email(self, email: str) -> UserEntity | None:
         return self.user_repository.get_user_by_email(email)
 
-    def get_user_by_id(self, user_id: int) -> dict:
-        user = self._get_user_or_raise(user_id)
-        return self._format_user(user)

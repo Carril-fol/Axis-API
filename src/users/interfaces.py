@@ -10,10 +10,6 @@ class IUserService(ABC):
         pass
     
     @abstractmethod
-    def get_user_by_id(self, id: int) -> dict:
-        pass
-
-    @abstractmethod
     def update_user(self, id: int, data: dict):
         pass
     

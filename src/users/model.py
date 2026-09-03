@@ -53,7 +53,3 @@ class UpdateUserModel(BaseModel):
     email: str | None = Field(default=None)
     password: str | None = Field(default=None)
 
-
-class DetailUserModel(BaseUserModel):
-    id: int = Field(..., description='ID of the user')
-    date_creation: datetime = Field(..., description='Creation date of the user')

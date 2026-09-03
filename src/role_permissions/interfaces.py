@@ -4,10 +4,6 @@ from abc import ABC, abstractmethod
 class IRolePermissionService(ABC):
 
     @abstractmethod
-    def role_has_permission(self, role_id: int, permission_id: int):
-        pass
-
-    @abstractmethod
     def assign_role_permission(self, data: dict, company_id: int):
         pass
 

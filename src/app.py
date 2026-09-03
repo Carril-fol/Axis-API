@@ -12,7 +12,6 @@ from products.controller import product_controller
 from categories.controller import category_controller
 from stock.controller import stock_blueprint
 from companies.controller import company_controller
-from users.controller import users_blueprint
 from users_companies.controller import users_companies_blueprint
 from roles.controller import role_blueprint
 from role_permissions.controller import role_permission_controller
@@ -32,7 +31,6 @@ app.config.from_object(settings_from_server[type_server])
 app.register_blueprint(product_controller)
 app.register_blueprint(category_controller)
 app.register_blueprint(stock_blueprint)
-app.register_blueprint(users_blueprint)
 app.register_blueprint(users_companies_blueprint)
 app.register_blueprint(company_controller)
 app.register_blueprint(role_blueprint)

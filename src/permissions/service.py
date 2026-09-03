@@ -6,10 +6,7 @@ from .model import (
     PermissionModel,
     CreatePermissionModel,
 )
-from .exceptions import (
-    PermissionNotFound, 
-    PermissionAlreadyExists
-)
+from .exceptions import PermissionAlreadyExists
 from .interfaces import IPermissionService
 
 
@@ -17,16 +14,6 @@ class PermissionService(IPermissionService, BaseService):
 
     def __init__(self, permission_repo: PermissionRepository):
         self._permission_repo = permission_repo
-
-    def _get_permission_by_name_or_raise(self, name: str) -> PermissionsEntity:
-        permission = self._permission_repo.get_permission_by_name(name)
-        if not permission:
-            raise PermissionNotFound()
-        return permission
-
-    def get_permission_by_name(self, name: str) -> dict:
-        permission = self._get_permission_by_name_or_raise(name)
-        return PermissionModel.model_validate(permission).model_dump()
 
     def get_all_permissions(self) -> list[dict]:
         permissions = self._permission_repo.get_all()

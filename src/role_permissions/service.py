@@ -46,9 +46,6 @@ class RolePermissionService(IRolePermissionService, BaseService):
             raise RoleNotInCompany()
         return role
 
-    def role_has_permission(self, role_id: int, permission_id: int):
-        return self._role_permission_repo.get_role_permission(role_id, permission_id)
-
     def assign_role_permission(self, data: dict, company_id: int):
         assign_role_permission = AssignRolePermissionModel.model_validate(data)
         role = self._get_role_in_company_or_raise(assign_role_permission.role_id, company_id)
