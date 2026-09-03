@@ -11,7 +11,6 @@ class Config:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
     JWT_ACCESS_TOKEN_EXPIRES = 1800
     JWT_REFRESH_TOKEN_EXPIRES = 2592000
-    CORS_SUPPORTS_CREDENTIALS = True
 
 
 class DevelopmentConfig(Config):
