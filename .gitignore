@@ -15,3 +15,5 @@ htmlcov/
 # Herramientas locales de prueba: reset_data.py vacia la base.
 # No se publican para que nadie las corra por accidente.
 scripts/
+
+PENDIENTES.txt
