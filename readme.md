@@ -9,9 +9,6 @@ from a single place — without ever seeing another company's data.
 ![PostgreSQL](https://img.shields.io/badge/postgresql-neon-336791)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-<!-- TODO: once deployed, put the live URL and the Swagger link right here, before anything
-     else on the page:
-     **[Live API](https://…)** · **[Interactive docs](https://…/apidoc/swagger)** -->
 
 ## ✨ Features
 
@@ -75,26 +72,6 @@ flowchart TD
 
 Registration creates the company, an `OWNER` role holding all 24 permissions, and the
 membership that links them. Every other user is created by that owner with a narrower role.
-
-### Data model
-
-```mermaid
-erDiagram
-    companies ||--o{ roles : defines
-    companies ||--o{ categories : owns
-    companies ||--o{ products : owns
-    companies ||--o{ users_companies : has
-    users ||--o{ users_companies : has
-    roles ||--o{ users_companies : assigned_in
-    roles ||--o{ role_permission : grants
-    permissions ||--o{ role_permission : granted_by
-    categories ||--o{ products : groups
-    products ||--|| stock : tracked_by
-```
-
-`users_companies` is the membership table: it is what makes a user belong to a company *with a
-role*, and every tenant check resolves through it. `stock` is one-to-one with `products`
-(`product_id` is unique), so a product always has exactly one stock row, created alongside it.
 
 ## 🚀 Getting Started
 
@@ -255,20 +232,7 @@ Every error is JSON, never HTML:
 
 Errors raised by the framework add a `detail` field.
 
-### Rate limits
-
-60 requests/minute and 1000/hour per IP by default, tightened on the sensitive ones: register
-3/hour, login 5/minute, user creation 3/minute, user update and delete 5/hour, role-permission
-changes 5/minute.
-
-Storage is in-process (`memory://`) because the app runs as a single Waitress process. Set
-`REDIS_URL` to move the counters to Redis when that stops being true — that is the only reason
-this project would need a Redis container, so Compose does not run one.
-
 ### Example workflow
-
-The API takes the token either as an httpOnly cookie or as an `Authorization: Bearer` header.
-`-c cookies.txt` saves the cookie, `-b cookies.txt` sends it back.
 
 **1. Register — creates the company and its owner**
 
