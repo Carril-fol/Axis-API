@@ -1,0 +1,65 @@
+================================================================================
+PENDIENTES - Stock Management API
+Actualizado: 2026-09-03 (cierre)
+================================================================================
+
+--------------------------------------------------------------------------------
+ABIERTO
+--------------------------------------------------------------------------------
+[ ] Revisar ProxyFix: si se agrega Cloudflare + nginx adelante, cambiar x_for=1
+    a x_for=2 en core/extensions.py. Solo aplica cuando haya dos proxies.
+
+[ ] Auditoria, si algun dia hace falta: tabla audit_logs consultable (la
+    opcion B de la lista vieja), no lineas de log. Se probo la opcion A —un
+    decorator que loggeaba action/user_id/company_id/target_id sobre los 7
+    endpoints de permisos— y se descarto: sin retencion de logs la linea no esta
+    el dia que alguien pregunta, y lo unico que sirve para mostrar que paso es
+    algo que se pueda consultar. Endpoints a cubrir: roles/assign_role_to_user,
+    users_companies/create, update y delete, role_permissions/assign, update y
+    revoke.
+
+[ ] Redis: solo si se pasa a varios procesos o instancias. Ahi el limiter
+    necesita storage compartido (storage_uri="redis://..."), que es cambio de
+    config y no de codigo. En Render, el Key Value store; local, docker run -d
+    -p 6379:6379 redis:7-alpine. El compose ya no levanta redis: con waitress
+    mono-proceso memory:// alcanza y el contenedor pisaba el REDIS_URL del .env.
+
+--------------------------------------------------------------------------------
+FUERA DE ALCANCE (decidido el 03/09/2026)
+--------------------------------------------------------------------------------
+[-] Suppliers: no va por ahora. El modulo nunca existio; las entradas viejas
+    hablaban de "completar el endpoint de registro", pero no habia nada que
+    completar.
+[-] Exportacion a Excel/CSV: va como microservicio aparte. Esta API no vuelve a
+    sumar openpyxl.
+[-] Flask-Caching: probado y descartado.
+[-] Auditoria por logs (opcion A): probada y descartada. Ver ABIERTO.
+
+--------------------------------------------------------------------------------
+CERRADO EL 03/09/2026
+--------------------------------------------------------------------------------
+[x] .dockerignore con patrones no recursivos: __pycache__/ y *.pyc solo matcheaban
+    el directorio raiz, asi que la imagen se llevaba 16 dirs y 109 .pyc compilados
+    en Windows, incluido asgi.cpython-313.pyc, huerfano de la estructura vieja.
+    Ahora **/__pycache__/, **/*.pyc, **/*.pyo
+[x] FLASK_ENV: el env_file del compose inyectaba development y le ganaba al
+    ENV FLASK_ENV=production del Dockerfile, asi que el contenedor levantaba
+    DevelopmentConfig (DEBUG=True, JWT_COOKIE_CSRF_PROTECT=False). El bloque
+    environment: del compose ahora fuerza production, que le gana al env_file.
+[x] Servicio redis del compose: eliminado (ver arriba)
+[x] products.status era nullable en la tabla y requerido en ProductModel — una
+    fila con NULL salia 500 en vez de rechazarse al escribir. Entity con
+    nullable=False y migracion a7c2d5e10b94
+[x] hash_password: argon2 (76 ms de CPU) corria dentro de un field_validator de
+    pydantic. Ahora es shared/security.py, llamado explicito desde UserService.
+    auth/service.py usa el mismo hasher en vez de instanciar el suyo
+[x] CI: .github/workflows/tests.yml corre pytest con uv en cada push/PR a main.
+    SQLite en memoria, sin PostgreSQL ni Redis. Dependabot ahora tambien vigila
+    las versiones de las actions
+[x] README: ejemplos de curl del flujo completo, tabla de variables de entorno,
+    seccion de tests
+
+================================================================================
+Historial anterior (bugs, features, seguridad y tests cerrados entre el 05/06 y
+el 02/09) en el git log y en la memoria del proyecto.
+================================================================================

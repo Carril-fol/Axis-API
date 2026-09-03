@@ -1,161 +1,280 @@
-# Stock Management API
+# Axis API
 
-A multi-tenant REST API for stock and inventory management. Each company manages its own products, categories, suppliers, stock, and users through a role-based access control system.
+Axis is a stock management API for teams that share one system. A company signs up, brings in
+its people with exactly the permissions each one needs, and runs its catalogue and inventory
+from a single place — without ever seeing another company's data.
 
-## Why this project
+![Python](https://img.shields.io/badge/python-3.13-blue)
+![Flask](https://img.shields.io/badge/flask-3.1-black)
+![PostgreSQL](https://img.shields.io/badge/postgresql-neon-336791)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-Built as a portfolio project to practice designing a production-grade 
-multi-tenant REST API from scratch. The goal was to implement patterns 
-I'd use in a real backend: RBAC, tenant isolation, JWT with cookies, 
-database migrations, and automated API docs — all in a single cohesive system.
+<!-- TODO: once deployed, put the live URL and the Swagger link right here, before anything
+     else on the page:
+     **[Live API](https://…)** · **[Interactive docs](https://…/apidoc/swagger)** -->
 
-## Tech Stack
+## ✨ Features
 
-- **Python 3.13** + **Flask**
-- **SQLAlchemy** + **Alembic** (migrations)
-- **PostgreSQL** (Neon serverless)
-- **Flask-JWT-Extended** (authentication via cookies)
-- **Pydantic v2** (request/response validation)
-- **Spectree** (OpenAPI docs)
-- **Argon2** (password hashing)
-- **Pytest** (testing with SQLite in-memory)
+*   **Multi-Tenant by Design**: Every product, category, role and user belongs to a company.
+    Two companies share the same database and never see a row of each other's data.
+*   **Granular Permissions**: 24 permissions grouped into roles you define.
+*   **Stock That Cannot Drift**: Each product carries exactly one stock row, created together
+    with it. `IN STOCK`, `LOW STOCK` and `OUT OF STOCK` are derived from the quantity on every
+    read and never stored, so the status is always the truth.
+*   **Soft Delete**: Deactivating a product keeps its row, drops its stock to zero and takes it
+    out of every listing. Nothing is erased.
+*   **Search and Pagination**: Every listing is paginated, and products and categories are
+    searchable by name.
 
-## Project Structure
+## 🛠️ Tech Stack
+
+*   **Language**: Python 3.13
+*   **Framework**: Flask 3.1
+*   **Database**: PostgreSQL
+*   **Auth**: JWT in httpOnly cookies (Flask-JWT-Extended), Argon2 password hashing
+*   **Validation & Docs**: Pydantic v2 and Spectree (OpenAPI)
+*   **Runtime**: Waitress, with in-process rate limiting (Flask-Limiter)
+
+## 🏗️ Architecture
+
+The code is organised by domain. Each module owns its `entity` , `repository`, `service`, `model`, `controller`, `exceptions`, and an `interfaces` file holding the contract it exposes to the rest of the
+system.
 
 ```
 src/
-├── app.py                  # Flask app entry point
-├── core/                   # Infrastructure (DB, extensions, settings)
-├── modules/                # Domain modules
-│   ├── users/
-│   ├── users_companies/    # Auth helpers + company user management
-│   ├── companies/
-│   ├── roles/
-│   ├── permissions/
-│   ├── role_permissions/   # RBAC middleware
-│   ├── categories/
-│   ├── products/
-│   └── stock/
-└── seeds/                  # Permissions seeder
-tests/                      # Pytest test suite
+├── app.py                  # Flask entry point: blueprints, handlers, lifecycle
+├── container.py            # Composition root: every service is wired here
+├── core/                   # Cross-cutting: extensions, logging, errors, health
+├── shared/                 # Database, session, authz, config, base classes, seeds
+├── auth/                   # Login, registration, token rotation
+├── users/  users_companies/  companies/
+├── roles/  permissions/  role_permissions/
+└── categories/  products/  stock/
+
+alembic/                    # Migrations
+tests/
 ```
 
-Each module follows the same structure: `entity`, `repository`, `service`, `model`, `controller`, `exceptions`, and optionally `middleware`.
+### Authorization
 
-## Setup
+Three layers run before any controller does work:
+
+```mermaid
+flowchart TD
+    A["Request with access_token cookie"] --> B{"jwt_required"}
+    B -->|missing or expired| E1["401"]
+    B -->|ok| C["shared/authz.py<br/>membership + permissions<br/>one outer join, cached in flask.g"]
+    C --> D{"belongs to a company?"}
+    D -->|no| E2["403"]
+    D -->|yes| F{"require_permission<br/>is it in the role?"}
+    F -->|no| E3["403"]
+    F -->|yes| G{"require_from_same_company<br/>is the resource theirs?"}
+    G -->|no| E4["403"]
+    G -->|yes| H["controller → service → repository"]
+```
+
+Registration creates the company, an `OWNER` role holding all 24 permissions, and the
+membership that links them. Every other user is created by that owner with a narrower role.
+
+### Data model
+
+```mermaid
+erDiagram
+    companies ||--o{ roles : defines
+    companies ||--o{ categories : owns
+    companies ||--o{ products : owns
+    companies ||--o{ users_companies : has
+    users ||--o{ users_companies : has
+    roles ||--o{ users_companies : assigned_in
+    roles ||--o{ role_permission : grants
+    permissions ||--o{ role_permission : granted_by
+    categories ||--o{ products : groups
+    products ||--|| stock : tracked_by
+```
+
+`users_companies` is the membership table: it is what makes a user belong to a company *with a
+role*, and every tenant check resolves through it. `stock` is one-to-one with `products`
+(`product_id` is unique), so a product always has exactly one stock row, created alongside it.
+
+## 🚀 Getting Started
 
 ### Requirements
 
-- Python 3.13+
-- PostgreSQL database (or Neon connection string)
+*   Python 3.13+
+*   [uv](https://docs.astral.sh/uv/)
+*   A PostgreSQL database (a Neon connection string works)
 
 ### Installation
 
 ```bash
 git clone https://github.com/Carril-fol/stocky-api-rest.git
 cd stocky-api-rest
-python -m venv .venv
-.venv\Scripts\activate      # Windows
-source .venv/bin/activate   # Linux/Mac
-pip install -r requirements.txt
+
+uv sync                        # creates .venv from uv.lock
+cp .env.example .env           # then fill it in
+
+uv run alembic upgrade head    # required: the app will not create the schema
+cd src && uv run python app.py
 ```
+
+The server listens on `http://127.0.0.1:8000` and seeds the 24 permissions on startup.
+
+### Docker
+
+```bash
+docker compose up --build
+```
+
+The image runs `alembic upgrade head` before starting and reads `.env` from the project root.
+Compose forces `FLASK_ENV=production` over that file, so the container runs with `DEBUG` off and
+JWT CSRF protection on — cookie-authenticated writes need the `X-CSRF-TOKEN` header there.
 
 ### Environment variables
 
-Copy `.env.example` to `.env` and fill in the values:
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | yes | PostgreSQL connection string |
+| `SECRET_KEY` | yes | Flask session signing key |
+| `JWT_SECRET_KEY` | yes | Signs the access and refresh tokens |
+| `FLASK_ENV` | no | `development` (default) or `production`. Controls CSRF and cookie flags |
+| `SERVER_HOST` | no | Bind address. Defaults to `0.0.0.0` |
+| `SERVER_PORT` | no | Defaults to `8000` |
+| `REDIS_URL` | no | Rate-limit storage. Defaults to `memory://` |
+
+### Migrations
 
 ```bash
-cp .env.example .env
+uv run alembic upgrade head                              # apply
+uv run alembic revision --autogenerate -m "description"  # generate
 ```
 
-```env
-NEON_DATABASE_URL=postgresql://user:password@host/dbname
-SECRET_KEY=your-secret-key
-JWT_SECRET_KEY=your-jwt-secret
-FLASK_ENV=development
-SERVER_HOST=0.0.0.0
-SERVER_PORT=8000
+## 📡 API Overview
+
+37 endpoints. **Permission** is the string checked against the caller's role; endpoints without
+one only need a valid session.
+
+### Auth — `/auth/api/v1`
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| POST | `/register` | public | Creates company + owner user. Returns an access token and sets its cookie. 3/hour |
+| POST | `/login` | public | Sets access and refresh cookies. 5/min |
+| POST | `/refresh` | refresh token | Rotates both tokens |
+| POST | `/logout` | session | Clears the cookies |
+
+### Companies — `/companies/api/v1`
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/detail/<company_id>` | owner only | Enforced in the service, not by a permission |
+| PUT/PATCH | `/update/<company_id>` | owner only | Same |
+
+### Company members — `/users/api/v1`
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| POST | `/create-user-from-company` | `create_user` | Creates a user already assigned to a role |
+| GET | `/get-users-from-company` | `read_user` | Paginated |
+| PUT/PATCH | `/update-user-from-company/<id>` | `update_user` | Tenant-checked |
+| DELETE | `/delete-user-from-company/<id>` | `delete_user` | Tenant-checked |
+
+### Roles — `/roles/api/v1`
+
+| Method | Path | Permission |
+|---|---|---|
+| POST | `/create-role` | `create_role` |
+| GET | `/get-roles` | `read_role` |
+| GET | `/get/<id>` | `read_role` |
+| PUT/PATCH | `/update/<id>` | `update_role` |
+| DELETE | `/delete/<id>` | `delete_role` |
+| PATCH | `/assign-role` | `assign_role` |
+
+### Role permissions — `/role-permissions/api/v1`
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/get/<role_id>` | `read_role_permission` | Permissions held by a role |
+| POST | `/assign-permission-to-role` | `create_role_permission` | Accepts a list of permission ids |
+| PUT/PATCH | `/update/<id>` | `update_role_permission` | `<id>` is the link row, not the role |
+| DELETE | `/revoke?role_id=&permission_id=` | `delete_role_permission` | |
+
+### Categories — `/categories/api/v1`
+
+| Method | Path | Permission |
+|---|---|---|
+| POST | `/create` | `create_category` |
+| GET | `/get/all` | `read_category` |
+| GET | `/get/<id>` | `read_category` |
+| GET | `/search/<name>` | `read_category` |
+| PUT/PATCH | `/update/<id>` | `update_category` |
+| DELETE | `/disable/<id>` | `delete_category` |
+
+### Products — `/products/api/v1`
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| POST | `/create` | `create_product` | Creates the product and its stock row |
+| GET | `/get/all` | `read_product` | Paginated, `?search=` supported |
+| GET | `/get/<id>` | `read_product` | Tenant-checked |
+| GET | `/search/<name>` | `read_product` | |
+| PATCH/PUT | `/update/<id>` | `update_product` | Tenant-checked |
+| PATCH | `/deactivate/<id>` | `delete_product` | Soft delete; cascades the stock to 0 |
+
+### Stock — `/stock/api/v1`
+
+| Method | Path | Permission | Notes |
+|---|---|---|---|
+| GET | `/get/all` | `read_stock` | Stock joined with its product, paginated |
+| GET | `/get/low` | `read_stock` | Below the low-stock threshold |
+| GET | `/get/<id>` | `read_stock` | Tenant-checked |
+| PUT/PATCH | `/update/<id>` | `update_stock` | Quantity cannot go negative |
+
+### Health
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/health` | Public. Checks the database connection |
+
+### Errors
+
+Every error is JSON, never HTML:
+
+```json
+{ "error": "Product not found" }
 ```
 
-### Run
-
-```bash
-cd src
-python app.py
-```
-
-On startup the server will:
-1. Create all database tables
-2. Seed all permissions
-
-## API Overview
-
-All endpoints are prefixed with their module version path. JWT is sent via HTTP-only cookies on login/register.
-
-| Module | Prefix |
+| Status | When |
 |---|---|
-| Auth & Users | `/users/api/v1` |
-| Company user management | `/users/api/v1` |
-| Companies | `/companies/api/v1` |
-| Roles | `/roles/api/v1` |
-| Role permissions | `/role-permissions/api/v1` |
-| Categories | `/categories/api/v1` |
-| Products | `/products/api/v1` |
-| Stock | `/stock/api/v1` |
-| Suppliers | `/suppliers/api/v1` |
+| 400 / 422 | Request body fails Pydantic validation |
+| 401 | Missing, expired or invalid token |
+| 403 | No membership, missing permission, or a resource from another company |
+| 404 | Resource does not exist |
+| 409 | Conflicts with existing data (duplicate email, unique constraint) |
+| 429 | Rate limit exceeded |
+| 500 | Unhandled — logged with a traceback, opaque to the client |
 
-Interactive API docs available at `/apidoc/swagger` once the server is running.
+Errors raised by the framework add a `detail` field.
 
-## Authentication
+### Rate limits
 
-Registration creates a company and an OWNER user with all permissions assigned. Login returns a JWT access token (30 min) and refresh token (30 days) via cookies.
+60 requests/minute and 1000/hour per IP by default, tightened on the sensitive ones: register
+3/hour, login 5/minute, user creation 3/minute, user update and delete 5/hour, role-permission
+changes 5/minute.
 
-```
-POST /users/api/v1/register   # Create company + owner user
-POST /users/api/v1/login      # Get access + refresh tokens
-POST /users/api/v1/refresh    # Rotate tokens
-POST /users/api/v1/logout     # Clear cookies
-GET  /users/api/v1/me         # Current user profile
-```
+Storage is in-process (`memory://`) because the app runs as a single Waitress process. Set
+`REDIS_URL` to move the counters to Redis when that stops being true — that is the only reason
+this project would need a Redis container, so Compose does not run one.
 
-## Authorization
+### Example workflow
 
-Every protected endpoint uses two layers:
+The API takes the token either as an httpOnly cookie or as an `Authorization: Bearer` header.
+`-c cookies.txt` saves the cookie, `-b cookies.txt` sends it back.
 
-1. `@jwt_required()` — validates the JWT token
-2. `@require_permission("permission_name")` — checks the user's role has the required permission (DB lookup per request)
-
-Additionally, resource endpoints use `@require_user_from_same_company()` to enforce tenant isolation — users cannot access resources from other companies.
-
-## Running Tests
-
-Tests use SQLite in-memory and are fully isolated (DB is wiped between each test).
+**1. Register — creates the company and its owner**
 
 ```bash
-pytest
-pytest -v                          # verbose
-pytest tests/test_users.py -v      # specific file
-```
-
-## Migrations
-
-```bash
-alembic upgrade head                                    # apply migrations
-alembic revision --autogenerate -m "description"        # generate new migration
-```
-
-## Quick start
-
-The typical flow is: after registration or login, the server sets an authentication cookie. The client then uses that cookie automatically when making requests to protected endpoints.
-
-All examples use `curl`. The `-c cookies.txt` flag saves the JWT cookie on login; `-b cookies.txt` sends it on subsequent requests.
-
-### 1. Register (creates company + owner user)
-
-```bash
-curl -s -X POST http://localhost:8000/users/api/v1/register \
-  -H "Content-Type: application/json" \
-  -c cookies.txt \
+curl -X POST http://localhost:8000/auth/api/v1/register \
+  -H "Content-Type: application/json" -c cookies.txt \
   -d '{
     "user": {
       "first_name": "John",
@@ -172,24 +291,19 @@ curl -s -X POST http://localhost:8000/users/api/v1/register \
   }'
 ```
 
-### 2. Login
+**2. Log in**
 
 ```bash
-curl -s -X POST http://localhost:8000/users/api/v1/login \
-  -H "Content-Type: application/json" \
-  -c cookies.txt \
-  -d '{
-    "email": "john@acme.com",
-    "password": "secret123"
-  }'
+curl -X POST http://localhost:8000/auth/api/v1/login \
+  -H "Content-Type: application/json" -c cookies.txt \
+  -d '{"email": "john@acme.com", "password": "secret123"}'
 ```
 
-### 3. Create a product
+**3. Create a product** — its stock row is created in the same transaction
 
 ```bash
-curl -s -X POST http://localhost:8000/products/api/v1/create \
-  -H "Content-Type: application/json" \
-  -b cookies.txt \
+curl -X POST http://localhost:8000/products/api/v1/create \
+  -H "Content-Type: application/json" -b cookies.txt \
   -d '{
     "name": "Laptop Pro 15",
     "description": "High performance laptop",
@@ -198,16 +312,23 @@ curl -s -X POST http://localhost:8000/products/api/v1/create \
   }'
 ```
 
-### 4. List products
+**4. Read the stock, product included**
 
 ```bash
-curl -s http://localhost:8000/products/api/v1/get/all \
-  -b cookies.txt
+curl http://localhost:8000/stock/api/v1/get/1 -b cookies.txt
 ```
 
-### 5. Logout
+## 🧪 Tests
+
+Pytest against SQLite in memory, with the database wiped between tests — no PostgreSQL needed
+to run them.
 
 ```bash
-curl -s -X POST http://localhost:8000/users/api/v1/logout \
-  -b cookies.txt
+uv run pytest
+uv run pytest -v
+uv run pytest tests/stock -v
 ```
+
+## 📄 License
+
+MIT — see [LICENSE](LICENSE).
