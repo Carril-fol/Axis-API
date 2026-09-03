@@ -12,7 +12,7 @@ class ProductEntity(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=False)
-    status = Column(String, unique=False)
+    status = Column(String, nullable=False, default='ACTIVE')
     date_creation = Column(DateTime, nullable=False, default=datetime.now)
     date_updated = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
