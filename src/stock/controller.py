@@ -5,15 +5,17 @@ from spectree import Response
 from core.extensions import spectree
 from shared.models import ErrorOutput, MessageResponse
 
-from .middleware import require_stock_from_same_company
 from .model import (
     UpdateStockInput,
     StockListDetail,
     StockItemResponse
 )
 
-from role_permissions.middleware import require_permission
-from shared.authz import get_current_user_company
+from shared.authz import (
+    get_current_user_company,
+    require_permission,
+    require_stock_from_same_company,
+)
 
 
 from container import stock_service
@@ -56,8 +58,8 @@ def get_all_stock():
 
 @stock_blueprint.route('/get/<int:id>', methods=['GET'])
 @jwt_required()
-@require_stock_from_same_company()
 @require_permission("read_stock")
+@require_stock_from_same_company
 @spectree.validate(
     resp=Response(
         HTTP_200=StockItemResponse,
@@ -73,8 +75,8 @@ def get_stock_by_id(id: int):
 
 @stock_blueprint.route('/update/<int:id>', methods=['PUT', 'PATCH'])
 @jwt_required()
-@require_stock_from_same_company()
 @require_permission("update_stock")
+@require_stock_from_same_company
 @spectree.validate(
     json=UpdateStockInput,
     resp=Response(

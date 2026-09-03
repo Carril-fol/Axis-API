@@ -4,16 +4,17 @@ from flask_jwt_extended import jwt_required
 
 from core.extensions import spectree, limiter
 from shared.models import ErrorOutput, MessageResponse
-from shared.authz import get_current_user_company
+from shared.authz import (
+    get_current_user_company,
+    require_permission,
+    require_user_from_same_company,
+)
 from .model import RegisterInputFromCompany, UsersFromCompanyOutput
 
 from container import user_company_service
-from users.middleware import require_user_from_same_company
 from users.model import (
     UpdateUserInput
 )
-
-from role_permissions.middleware import require_permission
 
 users_companies_blueprint = Blueprint(
     "users_companies",
@@ -44,8 +45,8 @@ def create_user_for_company(json: RegisterInputFromCompany):
 @users_companies_blueprint.route("/update-user-from-company/<int:id>", methods=["PUT", "PATCH"])
 @limiter.limit("3 per minute")
 @jwt_required()
-@require_user_from_same_company()
 @require_permission("update_user")
+@require_user_from_same_company
 @spectree.validate(
     json=UpdateUserInput,
     resp=Response(
@@ -66,8 +67,8 @@ def update_user_from_company(json: UpdateUserInput, id: int):
 @users_companies_blueprint.route("/delete-user-from-company/<int:id>", methods=["DELETE"])
 @limiter.limit("5 per hour")
 @jwt_required()
-@require_user_from_same_company()
 @require_permission("delete_user")
+@require_user_from_same_company
 @spectree.validate(
     resp=Response(
         HTTP_200=MessageResponse,

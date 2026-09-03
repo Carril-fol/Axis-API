@@ -13,10 +13,11 @@ from .model import (
     ListDetailProductModel
 )
 
-from role_permissions.middleware import require_permission
-from shared.authz import get_current_user_company
-
-from .middleware import require_user_from_same_company
+from shared.authz import (
+    get_current_user_company,
+    require_permission,
+    require_product_from_same_company,
+)
 
 
 from container import product_service
@@ -49,8 +50,8 @@ def create_product(json: CreateProductInputModel):
 
 @product_controller.route("/get/<int:id>", methods=["GET"])
 @jwt_required()
-@require_user_from_same_company()
 @require_permission("read_product")
+@require_product_from_same_company
 @spectree.validate(
     resp=Response(
         HTTP_200=DetailProductResponse,
@@ -68,8 +69,8 @@ def detail_product(id: int):
 
 @product_controller.route("/update/<int:id>", methods=["PATCH", "PUT"])
 @jwt_required()
-@require_user_from_same_company()
 @require_permission("update_product")
+@require_product_from_same_company
 @spectree.validate(
     json=UpdateProductInputModel,
     resp=Response(
@@ -90,8 +91,8 @@ def update_product(json: UpdateProductInputModel, id: int):
 
 @product_controller.route("/deactivate/<int:id>", methods=["PATCH"])
 @jwt_required()
-@require_user_from_same_company()
 @require_permission("delete_product")
+@require_product_from_same_company
 @spectree.validate(
     resp=Response(
         HTTP_200=MessageResponse,

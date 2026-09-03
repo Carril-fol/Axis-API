@@ -30,3 +30,9 @@ def test_a_member_cannot_delete_the_owner(client, owner, member):
 
 def test_users_are_not_shared_between_companies(client, owner, member, other_company):
     assert [u["id"] for u in list_users(client, other_company)] == [other_company.user_id]
+
+
+def test_another_company_cannot_delete_a_user(client, owner, member, other_company):
+    response = delete_user(client, other_company, member.user_id)
+
+    assert response.status_code == 403

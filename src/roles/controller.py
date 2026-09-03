@@ -4,7 +4,6 @@ from spectree import Response
 
 from core.extensions import spectree
 from shared.models import ErrorOutput, MessageResponse
-from .middleware import require_user_from_same_company
 from .model import (
     CreateRoleInput,
     UpdateRoleInput,
@@ -13,8 +12,11 @@ from .model import (
     RoleListDetail
 )
 
-from shared.authz import get_current_user_company
-from role_permissions.middleware import require_permission
+from shared.authz import (
+    get_current_user_company,
+    require_permission,
+    require_role_from_same_company,
+)
 
 from container import role_service, role_membership_service
 role_blueprint = Blueprint("roles", __name__, url_prefix="/roles/api/v1")
@@ -62,7 +64,7 @@ def get_all_roles():
 @role_blueprint.route("/get/<int:id>", methods=["GET"])
 @jwt_required()
 @require_permission("read_role")
-@require_user_from_same_company()
+@require_role_from_same_company
 @spectree.validate(
     resp=Response(
         HTTP_200=DetailRoleModel,
@@ -79,7 +81,7 @@ def get_role_by_id(id: int):
 @role_blueprint.route("/delete/<int:id>", methods=["DELETE"])
 @jwt_required()
 @require_permission("delete_role")
-@require_user_from_same_company()
+@require_role_from_same_company
 @spectree.validate(
     resp=Response(
         HTTP_200=MessageResponse,
@@ -99,7 +101,7 @@ def delete_role(id: int):
 @role_blueprint.route("/update/<int:id>", methods=["PUT", "PATCH"])
 @jwt_required()
 @require_permission("update_role")
-@require_user_from_same_company()
+@require_role_from_same_company
 @spectree.validate(
     json=UpdateRoleInput,
     resp=Response(

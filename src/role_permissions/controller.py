@@ -5,14 +5,13 @@ from spectree import Response
 from flask import Blueprint
 from flask_jwt_extended import jwt_required
 
-from .middleware import require_permission
 from .model import (
     AssignRolePermissionInput,
     UpdateRolePermissionInput,
     DeleteRolePermissionQuery,
     ListRolePermissionsOutput
 )
-from shared.authz import get_current_user_company
+from shared.authz import get_current_user_company, require_permission
 
 from container import role_permission_service
 

@@ -6,8 +6,7 @@ from spectree import Response
 from container import category_service
 from core.extensions import spectree
 from shared.models import ErrorOutput, MessageResponse
-from role_permissions.middleware import require_permission
-from shared.authz import get_current_user_company
+from shared.authz import get_current_user_company, require_permission
 
 from .model import (
     CreateCategoryInput,

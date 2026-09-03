@@ -46,6 +46,14 @@ def test_a_role_from_another_company_cannot_be_assigned(client, owner, member, o
     assert response.status_code == 404
 
 
+def test_another_company_cannot_read_a_role(client, owner, other_company):
+    role_id = make_role(client, owner, "Warehouse")
+
+    response = get_role(client, other_company, role_id)
+
+    assert response.status_code == 403
+
+
 def test_a_role_without_the_permission_is_refused(client, member):
     response = create_role(client, member, "Manager")
 
