@@ -6,6 +6,4 @@ services:
     env_file:
       - .env
     environment:
-      # Wins over the .env, which sets development for running the app locally.
-      # The container is meant to behave like production: DEBUG off, JWT CSRF on.
       - FLASK_ENV=production
