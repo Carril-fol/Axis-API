@@ -24,7 +24,7 @@ cors = CORS(
     app, 
     supports_credentials=True,
     origins=[
-        "http://localhost:3000"
+        "*"
     ],
     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Requested-With", "X-CSRF-TOKEN"]
