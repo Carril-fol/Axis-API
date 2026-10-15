@@ -5,15 +5,6 @@ from shared.models import PaginatedResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
-def _upper(value: str) -> str:
-    return value.upper()
-
-def _must_contain_letters(value: str) -> str:
-    if not any(char.isalpha() for char in value):
-        raise ValueError("Name must contain alphabet characters.")
-    return value
-
-
 
 class ProductStatus(StrEnum):
     ACTIVE = "ACTIVE"

@@ -112,7 +112,6 @@ def deactivate_product(id: int):
 
 @product_controller.route("/get/all", methods=["GET"])
 @jwt_required()
-@require_permission("read_product")
 @spectree.validate(
     resp=Response(
         HTTP_200=ListDetailProductModel,
