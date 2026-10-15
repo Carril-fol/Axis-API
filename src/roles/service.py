@@ -59,6 +59,12 @@ class RoleService(IRoleService, BaseService):
         role = self._get_role_by_or_raise(id)
         return DetailRoleModel.model_validate(role).model_dump()
     
+    def get_role_by_name(self, name: str, company_id: int) -> DetailRoleModel:
+        role = self._role_repository.get_role_by_name(name.upper(), company_id)
+        if not role:
+            raise RoleNotFound()
+        return DetailRoleModel.model_validate(role).model_dump()
+
     def is_role_owner(self, id: int) -> bool:
         role = self._get_role_by_or_raise(id)
         return role.name == OWNER_ROLE_NAME

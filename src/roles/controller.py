@@ -134,3 +134,21 @@ def assign_role_to_user(json: AssignRoleInput):
 
     role_membership_service.assign_role_to_user(data["user_id"], data["role_id"], company_id)
     return {"msg": "Role reassigned successfully"}, 200
+
+
+@role_blueprint.route("/search/<string:name>", methods=["GET"])
+@jwt_required()
+@require_permission("read_role")
+@spectree.validate(
+    resp=Response(
+        HTTP_200=DetailRoleModel,
+        HTTP_403=ErrorOutput,
+        HTTP_404=ErrorOutput
+    ),
+    tags=["Roles"]
+)
+def get_role_by_name(name: str):
+    company_id = get_current_user_company().company_id
+
+    role = role_service.get_role_by_name(name, company_id)
+    return role, 200

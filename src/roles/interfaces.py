@@ -19,6 +19,10 @@ class IRoleService(ABC):
         pass
 
     @abstractmethod
+    def get_role_by_name(self, name: str, company_id: int) -> DetailRoleModel:
+        pass
+
+    @abstractmethod
     def delete_soft_rol(self, id: int, data: dict):
         pass
 
