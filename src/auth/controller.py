@@ -14,12 +14,13 @@ from flask_jwt_extended import (
 
 from core.extensions import limiter, spectree
 from shared.models import ErrorOutput, MessageResponse
+from users_companies.model import ProfileOutput
 from .model import (
     RegisterWithCompanyInput,
     LoginInput,
     AuthOutput
 )
-from container import auth_service, user_registration_orchestrator
+from container import auth_service, user_company_service, user_registration_orchestrator
 
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth/api/v1")
@@ -109,3 +110,18 @@ def refresh_token():
     set_access_cookies(response, new_access_token)
     set_refresh_cookies(response, new_refresh_token)
     return response
+
+
+@auth_blueprint.route("/me", methods=["GET"])
+@jwt_required()
+@spectree.validate(
+    resp=Response(
+        HTTP_200=ProfileOutput,
+        HTTP_401=ErrorOutput,
+        HTTP_404=ErrorOutput
+    ),
+    tags=["Auth"]
+)
+def me():
+    user_id = int(get_jwt_identity())
+    return user_company_service.get_profile(user_id), 200

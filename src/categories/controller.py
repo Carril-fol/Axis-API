@@ -63,7 +63,6 @@ def get_category_by_id(id: int):
 
 @category_controller.route('/get/all', methods=['GET'])
 @jwt_required()
-@require_permission("read_category")
 @spectree.validate(
     resp=Response(
         HTTP_200=ListDetailCategoryModel,
