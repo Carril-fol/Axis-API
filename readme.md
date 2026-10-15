@@ -52,26 +52,6 @@ alembic/                    # Migrations
 tests/
 ```
 
-### Authorization
-
-Three layers run before any controller does work:
-
-```mermaid
-flowchart TD
-    A["Request with access_token cookie"] --> B{"jwt_required"}
-    B -->|missing or expired| E1["401"]
-    B -->|ok| C["shared/authz.py<br/>membership + permissions<br/>one outer join, cached in flask.g"]
-    C --> D{"belongs to a company?"}
-    D -->|no| E2["403"]
-    D -->|yes| F{"require_permission<br/>is it in the role?"}
-    F -->|no| E3["403"]
-    F -->|yes| G{"require_from_same_company<br/>is the resource theirs?"}
-    G -->|no| E4["403"]
-    G -->|yes| H["controller → service → repository"]
-```
-
-Registration creates the company, an `OWNER` role holding all 24 permissions, and the
-membership that links them. Every other user is created by that owner with a narrower role.
 
 ## 🚀 Getting Started
 
@@ -127,7 +107,7 @@ uv run alembic revision --autogenerate -m "description"  # generate
 
 ## 📡 API Overview
 
-37 endpoints. **Permission** is the string checked against the caller's role; endpoints without
+38 endpoints. **Permission** is the string checked against the caller's role; endpoints without
 one only need a valid session.
 
 ### Auth — `/auth/api/v1`
@@ -138,6 +118,7 @@ one only need a valid session.
 | POST | `/login` | public | Sets access and refresh cookies. 5/min |
 | POST | `/refresh` | refresh token | Rotates both tokens |
 | POST | `/logout` | session | Clears the cookies |
+| GET | `/me` | session | The caller's user, company, role and permission names |
 
 ### Companies — `/companies/api/v1`
 
