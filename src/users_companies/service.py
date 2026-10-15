@@ -8,7 +8,13 @@ from roles.interfaces import IRoleService
 from .interfaces import IUserCompanyService
 from .repository import UserCompanyRepository
 from .entity import UserCompanyEntity
-from .model import CreateUserCompanyModel, UserFromCompanyModel
+from .model import (
+    CreateUserCompanyModel,
+    ProfileOutput,
+    ProfileRoleModel,
+    ProfileUserModel,
+    UserFromCompanyModel,
+)
 from .exceptions import (
     UserWithAnEmailAlreadyExists,
     UserCompanyInsufficientRolePrivileges,
@@ -72,6 +78,21 @@ class UserCompanyService(IUserCompanyService, BaseService):
             ).model_dump()
             for user, role_id in rows
         ]
+
+    def get_profile(self, user_id: int) -> dict:
+        membership, permissions = self.user_company_repo.get_membership_with_permissions(user_id)
+        if membership is None:
+            raise UserCompanyNotFound()
+
+        user = self.user_service.get_user_by_id(user_id)
+        role = self.role_service.get_role_by_id(membership.role_id)
+
+        return ProfileOutput(
+            user=ProfileUserModel.model_validate(user),
+            company_id=membership.company_id,
+            role=ProfileRoleModel(id=role["id"], name=role["name"], status=role["status"]),
+            permissions=sorted(permissions),
+        ).model_dump()
 
     def create_membership(self, user_id: int, role_id: int, company_id: int) -> UserCompanyEntity:
         membership = CreateUserCompanyModel.model_validate(

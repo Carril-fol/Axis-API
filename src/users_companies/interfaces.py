@@ -21,6 +21,10 @@ class IUserCompanyService(ABC):
         pass
 
     @abstractmethod
+    def get_profile(self, user_id: int) -> dict:
+        pass
+
+    @abstractmethod
     def create_membership(self, user_id: int, role_id: int, company_id: int) -> UserCompanyEntity:
         pass
 
