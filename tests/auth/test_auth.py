@@ -1,5 +1,5 @@
 from tests.auth.conftest import refresh
-from tests.conftest import login, register_request
+from tests.conftest import OWNER, login, register_request
 
 
 def test_register_returns_a_token(client):
@@ -41,5 +41,33 @@ def test_refresh_rotates_both_tokens(client, owner):
 
 def test_a_protected_endpoint_needs_a_token(client):
     response = client.get("/roles/api/v1/get-roles")
+
+    assert response.status_code == 401
+
+
+def test_me_returns_the_user_role_and_permissions(client, owner):
+    response = client.get("/auth/api/v1/me", headers=owner.headers)
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["user"]["id"] == owner.user_id
+    assert body["user"]["email"] == OWNER["email"]
+    assert "password" not in body["user"]
+    assert body["company_id"] == owner.company_id
+    assert body["role"] == {"id": owner.role_id, "name": "OWNER", "status": "ACTIVE"}
+    assert "create_user" in body["permissions"]
+
+
+def test_me_gives_a_fresh_role_only_its_own_permissions(client, member):
+    response = client.get("/auth/api/v1/me", headers=member.headers)
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["role"]["name"] == "WAREHOUSE"
+    assert body["permissions"] == []
+
+
+def test_me_needs_a_token(client):
+    response = client.get("/auth/api/v1/me")
 
     assert response.status_code == 401
