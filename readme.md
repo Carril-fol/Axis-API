@@ -28,9 +28,6 @@ from a single place — without ever seeing another company's data.
 *   **Language**: Python 3.13
 *   **Framework**: Flask 3.1
 *   **Database**: PostgreSQL
-*   **Auth**: JWT in httpOnly cookies (Flask-JWT-Extended), Argon2 password hashing
-*   **Validation & Docs**: Pydantic v2 and Spectree (OpenAPI)
-*   **Runtime**: Waitress, with in-process rate limiting (Flask-Limiter)
 
 ## 🏗️ Architecture
 
