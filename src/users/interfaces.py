@@ -8,6 +8,10 @@ class IUserService(ABC):
     @abstractmethod
     def get_user_by_email(self, email: str) -> UserEntity | None:
         pass
+
+    @abstractmethod
+    def get_user_by_id(self, user_id: int) -> UserEntity:
+        pass
     
     @abstractmethod
     def update_user(self, id: int, data: dict):

@@ -50,3 +50,6 @@ class UserService(IUserService, BaseService):
     def get_user_by_email(self, email: str) -> UserEntity | None:
         return self.user_repository.get_user_by_email(email)
 
+    def get_user_by_id(self, user_id: int) -> UserEntity:
+        return self._get_user_or_raise(user_id)
+
